@@ -1,13 +1,10 @@
 # Assessment and validation
 
-Assessment baseline: main at be3fac1, 2 November 2026. Clean checkout; PRs #1 and
-#2 already merged; no open PRs at assessment. TOC version 0.2.0, interface 16001.
-The original implementation used item names as aura names, an unguarded global
-GetItemCount, account-wide settings and no level or replacement filtering.
-Events could run before settings initialization. AnyUp depended on the user's
-ActionButtonUseKeyDown setting. Combat left an old action armed. CI checked file
-presence and SVG syntax but neither Lua behavior nor an actual ZIP.
-The MIT license and original JPEG/SVG assets have been retained.
+Version 0.4.0 restores the 0.2.0 command set, fixed priority and English-name
+buff matching. It retains modern item APIs, level checks, per-character toggles,
+combat protection and packaging checks from 0.3.0. The original name matching is
+an explicit assumption, not confirmed client behavior. There is no mandatory
+aura mapping or conflict configuration.
 
 ## API evidence and limits
 
@@ -47,7 +44,8 @@ Whether the engine permits its macro-triggered click remains NOT VERIFIED.
 ## Candidate data ledger
 
 All six IDs are retained as candidates, not a certified database. The names below
-are labels from the existing project. Runtime eligibility uses client item data.
+are labels from the existing project and are also the assumed exact aura names.
+Required levels come from client item data.
 
 | Candidate ID | Label | Required level / duration evidence | Aura name / spell ID | Stacking / higher ranks |
 |---|---|---|---|---|
@@ -66,13 +64,13 @@ comments and Classic database fields were not accepted as Forever verification.
 Even those two entries have no in-game PASS. Duration is not used for selection:
 an existing effect is retained until it actually disappears.
 
-No guessed aura IDs, English name fallbacks, rank groups or shared elixir
-categories are shipped. Each character starts without aura mappings and therefore
-without an actionable queue. User mappings and blockers are explicit local
-observations, not automatically promoted to verified project data. A valid spell
-ID only establishes that a spell exists; it cannot prove the item applies it.
-Unknown conflicts cannot be detected. Leave an entry unmapped/disabled until its
-effects and interactions have been checked.
+The addon assumes each buff has exactly the English item label shown above,
+as in 0.2.0. This is NOT VERIFIED and may fail even on an English client. A
+localized item name is used for chat feedback, not as proof of an aura name.
+There is no Classic API fallback, spell-ID mapping or replacement filtering.
+If `/fem buffs` shows an active effect as MISSING, disable that entry. Likewise,
+disable entries whose stronger/replacement interactions have not been checked.
+The simplified version can otherwise queue an unnecessary replacement.
 
 ## Automated validation
 
@@ -80,7 +78,7 @@ Run from the repository root:
 
 ```text
 python scripts/validate.py
-python scripts/validate.py --tag v0.3.0
+python scripts/validate.py --tag v0.4.0
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
@@ -89,8 +87,8 @@ development dependency with `python -m pip install lupa==2.8`; the runner
 explicitly loads lupa.lua51. Nothing is bundled with the addon.
 
 The Lua harness covers missing/present buffs and items, priorities, level changes,
-configured conflicts, bag/aura events, combat, secure attribute updates, startup,
-per-character persistence/migration, reset, malformed settings, invalid/missing
+fixed-order toggles, bag/aura events, combat, secure attribute updates, startup,
+per-character persistence/migration, ignored legacy configuration, invalid/missing
 APIs, secret-value rejection, item-cache completion and event coalescing.
 Secure state snippets are executed in a mock, not a real protected environment.
 Python validates exact TOC entries, metadata, tag/version agreement and actual ZIP
@@ -101,18 +99,18 @@ Local development results (2 November 2026):
 
 | Check | Result |
 |---|---|
-| Lua 5.1 parse/load and 19 mocked scenarios | PASS (Lupa Lua 5.1 runtime) |
+| Lua 5.1 parse/load and 18 mocked scenarios | PASS (Lupa Lua 5.1 runtime) |
 | Nine Python distribution/guard tests | PASS |
 | TOC version/interface structure and referenced file | PASS; actual current client interface NOT VERIFIED |
 | ZIP root, exact members, byte integrity and repeatability | PASS |
-| Workflow YAML parsing and embedded Bash syntax | PASS |
+| Release/upload workflow definitions | Unchanged; not executed for this change |
 | Real secure clicks, combat transitions, item/aura/stacking data and taint | NOT VERIFIED |
 | CurseForge authenticated catalog and upload | BLOCKED pending configuration/approval |
 
 GitHub Actions results are reported on the pull request. Release/upload workflows
 must not be executed merely to test publication.
 
-## In-game checklist — all NOT VERIFIED until a tester records results
+## In-game checklist - all NOT VERIFIED until a tester records results
 
 Record date, locale, exact GetBuildInfo() output and PASS / FAIL for each step.
 Use a clean addon profile first, then repeat relevant checks with normal addons.
@@ -120,15 +118,17 @@ Use a clean addon profile first, then repeat relevant checks with normal addons.
 1. Confirm interface 16001 matches the intended Forever build and the addon loads.
 2. Login, reload, relog and change characters. Verify settings persist independently.
    Check legacy disabled entries migrate without changing the account table.
+   Upgrade from 0.3.0: toggles persist, while old priorities, mappings and blockers
+   are ignored and remain stored for rollback.
 3. Confirm item IDs, localized names, required levels and durations for all six
    candidates using the actual client. Record evidence in the ledger.
 4. Manually use each item from a normal bag/action-bar slot in a controlled test.
-   Compare /fem buffs before/after; record the resulting aura ID and name.
-   Set /fem aura N SPELLID only after observing the actual applied aura.
-5. Test equal effects, all higher ranks, relevant class buffs and other elixirs.
-   Record which replace, coexist or reject. Add observed blocking IDs with
-   /fem block N SPELLID, or disable the entry. Confirm no needless replacement.
-6. With a missing mapped effect and an available item, test the documented macro.
+   Compare `/fem buffs` before/after with the actual player buffs. Record the real
+   aura name. Disable entries whose assumed name does not match.
+5. Test equal effects, higher ranks, relevant class buffs and other elixirs.
+   Record which replace, coexist or reject. There are no blocking rules: disable
+   entries with unwanted replacement behavior.
+6. With a missing tracked effect and an available item, test the documented macro.
    Test ActionButtonUseKeyDown both enabled and disabled, repeated presses,
    modifiers and key holds. Exactly one manual activation may attempt one use.
 7. Confirm the alpha-zero/off-screen button accepts the authorized click. If the

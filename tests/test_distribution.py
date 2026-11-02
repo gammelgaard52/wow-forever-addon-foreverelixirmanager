@@ -92,7 +92,7 @@ class DistributionTests(unittest.TestCase):
         }
         rows = [{"id": 123, "name": "test-version", "gameVersionTypeID": 456}]
         with patch.dict(os.environ, config), patch.object(cf, "api", side_effect=[rows, {"id": 99}]) as api, patch("builtins.print"):
-            cf.main(["--approve-upload", "--tag", "v0.3.0", "--archive", str(path),
+            cf.main(["--approve-upload", "--tag", "v" + validation.metadata(), "--archive", str(path),
                      "--changelog", str(ROOT / "CHANGELOG.md")])
             self.assertEqual(api.call_count, 2)
             self.assertEqual(api.call_args.args[:2], ("/projects/42/upload-file", "test-only"))
