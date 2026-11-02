@@ -1,0 +1,83 @@
+# CurseForge publication setup
+
+Status: **prepared, not executed**. No credentials, project ID or Forever version
+IDs were supplied, and no upload was attempted. The first upload still needs
+explicit approval and completed live validation.
+
+## Supported API
+
+The official [CurseForge Upload API](https://support.curseforge.com/support/solutions/articles/9000197321-curseforge-upload-api)
+documents author tokens in the `X-Api-Token` header, multipart file submission,
+version catalogs, release types and Markdown changelogs. This is the author upload
+service, not the separate API-key-based client download API. The workflow uses the
+WoW site at `https://wow.curseforge.com/api`, verifies the selected version against
+its live catalog and submits to `/projects/{projectId}/upload-file`.
+
+The script sends the ZIP as `file` and JSON as `metadata`. It chooses `alpha`,
+`beta` or `release`, includes the changelog, and requests manual release after
+moderation. It rejects redirects rather than forwarding credentials elsewhere.
+A successful response is an uploaded file ID, not proof of approval or visibility.
+The authenticated endpoint and the actual Forever catalog entries remain
+**NOT VERIFIED** until credentials are configured and a read-only query succeeds.
+
+## Configure GitHub Actions
+
+In this repository's **Settings → Secrets and variables → Actions**, configure:
+
+| Kind | Name | Value |
+|---|---|---|
+| Secret | `CURSEFORGE_API_TOKEN` | Author token generated at [CurseForge API Tokens](https://authors.curseforge.com/account/api-tokens), with access to this project |
+| Variable | `CURSEFORGE_PROJECT_ID` | Numeric ID from the existing CurseForge project dashboard |
+| Variable | `CURSEFORGE_GAME_VERSION_ID` | Numeric ID of the supported Forever client version from the upload API catalog |
+| Variable | `CURSEFORGE_GAME_VERSION_NAME` | Exact `name` returned for that entry |
+| Variable | `CURSEFORGE_GAME_VERSION_TYPE_ID` | Exact `gameVersionTypeID` for that Forever entry |
+
+These environment-variable names are local workflow conventions. The actual API
+authentication field is **X-Api-Token**. Do not paste the token in source files,
+issues, PR comments or chat. No repository security settings are changed by this PR.
+
+A maintainer can securely provide the token in their local environment and run:
+
+```text
+python scripts/curseforge.py --list-versions
+```
+
+This performs only `GET /game/versions`. Check the returned entries against the
+project's supported Forever versions in CurseForge. Do not substitute the TOC
+interface number (16001) for a CurseForge version ID, or select a Classic/retail
+entry with a similar name. No Forever numeric IDs are invented or hardcoded here.
+The upload validates the ID, exact name and type tuple; the maintainer must first
+establish that this tuple denotes Forever. Missing catalog support blocks upload.
+
+## Authorized publication procedure
+
+1. Finish the live-client checklist, review the PR, and approve merging separately.
+2. Obtain explicit approval for the specific GitHub release tag. Update the TOC
+   version and release notes together before creating that tag. A tag push runs
+   validation and publishes the installable GitHub release archive.
+3. Obtain separate approval to upload that version to CurseForge. In Actions,
+   select **Upload approved release to CurseForge**, run from **main**, supply
+   the existing release tag and release type, and tick the upload-authorization
+   input. An ordinary push, PR, or GitHub release event never runs this workflow.
+4. The workflow requires a tag reachable from main and a non-draft GitHub release.
+   It validates tagged source, reconstructs the deterministic package, and compares
+   it byte-for-byte with the GitHub release asset before exposing the token to the
+   upload step. Legacy tags without these scripts/packaging cannot use this path.
+5. Review the returned file ID in the project dashboard. The workflow requests
+   manual release after moderation; make it public only with publication approval.
+
+Do not re-run a timed-out or uncertain upload without checking the project files:
+the API does not document an idempotency key, and another POST can duplicate a file.
+The workflow serializes runs for each tag, and the script does not retry POSTs.
+The token is scoped to the upload step; GitHub permissions are read-only.
+
+## Moderation and first submission
+
+CurseForge's [project submission guide](https://support.curseforge.com/support/solutions/articles/9000197241-creating-and-submitting-a-project)
+says the first file submits the project for moderator review. Automation does not
+bypass that review. Alpha/beta/release classification and review approval are
+separate. The guide also says a project needs an approved Release file before it
+syncs to the CurseForge app; do not label an untested build Release just for visibility.
+
+**BLOCKED:** actual publication needs the configured token, project/version values,
+completed in-game checks and explicit approval. Nothing has been uploaded here.
