@@ -57,4 +57,4 @@ Version tags `vX.Y.Z` trigger the GitHub Actions ZIP release workflow. Read [AGE
 
 ## License
 
-Copyright © 2026 Martin Gammelgaard Rasmussen. Released under the **[MIT License](LICENSE)**, including original repository artwork. World of Warcraft and Blizzard are trademarks of their respective owners.
+Copyright © 2026 Martin Gammelgård Rasmussen. Released under the **[MIT License](LICENSE)**, including original repository artwork. World of Warcraft and Blizzard are trademarks of their respective owners.
