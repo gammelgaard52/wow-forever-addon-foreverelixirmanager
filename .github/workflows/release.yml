@@ -1,0 +1,40 @@
+name: Release WoW addon
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check addon files and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f ForeverElixirManager/ForeverElixirManager.toc
+          test -f ForeverElixirManager/ForeverElixirManager.lua
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            grep -Fxq "## Version: $version" ForeverElixirManager/ForeverElixirManager.toc
+          fi
+      - name: Package installable ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          zip -r "dist/ForeverElixirManager-${GITHUB_REF_NAME}.zip" ForeverElixirManager -x '*.DS_Store'
+          unzip -l "dist/ForeverElixirManager-${GITHUB_REF_NAME}.zip"
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: foreverelixirmanager-addon
+          path: dist/*.zip
+      - name: Publish GitHub release on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --title "ForeverElixirManager $GITHUB_REF_NAME" --generate-notes

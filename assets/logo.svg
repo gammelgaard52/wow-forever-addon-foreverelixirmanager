@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ForeverElixirManager holy elixir logo">
+<defs><radialGradient id="bg"><stop stop-color="#342860"/><stop offset="1" stop-color="#090c24"/></radialGradient><linearGradient id="gold" x2=".9" y2="1"><stop stop-color="#fff1aa"/><stop offset=".5" stop-color="#e9a823"/><stop offset="1" stop-color="#80501e"/></linearGradient><linearGradient id="liquid" x2=".9" y2="1"><stop stop-color="#56deff"/><stop offset=".55" stop-color="#2487ef"/><stop offset="1" stop-color="#432eaa"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect x="8" y="8" width="496" height="496" rx="88" fill="url(#bg)" stroke="url(#gold)" stroke-width="18"/>
+<circle cx="252" cy="247" r="172" fill="none" stroke="#e7ad4b" stroke-width="3" opacity=".46"/>
+<ellipse cx="247" cy="106" rx="100" ry="26" fill="none" stroke="#ffdb73" stroke-width="12"/>
+<path d="M215 130v50c-62 22-104 80-104 149 0 83 66 133 146 133s145-50 145-133c0-68-42-126-103-149v-50Z" fill="url(#liquid)" stroke="url(#gold)" stroke-width="13"/>
+<path d="M147 311c66-35 119 34 220-8" fill="none" stroke="#d7fbff" stroke-width="18" opacity=".5"/>
+<rect x="202" y="111" width="110" height="40" rx="12" fill="url(#gold)"/>
+<path d="m250 211 17 42 42 17-42 17-17 42-17-42-42-17 42-17Z" fill="#fff1b0" stroke="#eaa52e" stroke-width="6"/>
+<g stroke="#ffcf65" stroke-width="9" fill="none" stroke-linejoin="round" stroke-linecap="round"><rect x="327" y="257" width="37" height="37" rx="6"/><path d="m333 273 10 10 26-28"/><rect x="327" y="321" width="37" height="37" rx="6"/><path d="m333 337 10 10 26-28"/><rect x="327" y="385" width="37" height="37" rx="6"/><path d="M382 275h47M382 339h47M382 403h47"/></g>
+</svg>
