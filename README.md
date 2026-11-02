@@ -1,41 +1,60 @@
 # ForeverElixirManager
 
-Lightweight, experimental elixir manager for **World of Warcraft: Forever**.
+**Smart elixir management for World of Warcraft: Forever.**
 
-![ForeverElixirManager logo](assets/logo.svg)
+![ForeverElixirManager artwork](assets/logo.jpg)
 
-It queues the **first missing elixir buff whose item is present in your bags** on a secure action button. Consumption requires a manual keypress. Secure button behavior and Forever-specific aura IDs remain **NOT VERIFIED in-game**.
+ForeverElixirManager is a lightweight, priority-based elixir addon for World of Warcraft: Forever. It checks your active buffs and bag inventory, then queues the next missing and available elixir for manual use. Designed for efficient leveling and group play, with combat-safe updates, clear chat feedback, and no automatic consumption.
 
-## Install
+> **Experimental / in-game verification required.** Forever-specific aura names, item IDs, elixir stacking and secure `/click` support have not yet been validated on the live client. This project is not affiliated with Blizzard Entertainment.
 
-Download a tagged [GitHub Release](../../releases) and extract it to your WoW `Interface/AddOns/` directory. The folder must be `Interface/AddOns/ForeverElixirManager/`, with the `.toc` and `.lua` inside. Restart the client and enable the addon.
+## Features
 
-Create this WoW macro and bind it to a key:
+- **Priority-based:** chooses the first elixir whose buff is missing.
+- **Inventory-aware:** skips any elixir not currently in your bags.
+- **Player-controlled:** only a manual button press attempts consumption.
+- **Combat-safe configuration:** protected button attributes update only outside combat.
+- **Lightweight:** no external addon dependencies; simple chat status feedback.
+
+Originally built for a Discipline Priest supporting a Protection Paladin, but suitable for other characters using supported elixirs.
+
+## Installation
+
+Download a versioned [GitHub release](../../releases) and extract the ZIP into `Interface/AddOns/` so it contains:
 
 ```text
+ForeverElixirManager/
+  ForeverElixirManager.toc
+  ForeverElixirManager.lua
+```
+
+Enable the addon, then create this in-game macro:
+
+```lua
 #showtooltip
 /click ForeverElixirSecureBtn
 ```
 
+Bind it to a key. **The secure click must be tested in Forever**, as the client may restrict macro-triggered clicks.
+
 ## Commands
 
-- `/fem` — rescan and show commands
-- `/fem buffs` — show aura-name check and bag quantities
+- `/fem` — refresh selection
+- `/fem buffs` — show tracked buff and bag status
 - `/fem status` — show queued item
+- `/fem list` — view configured elixirs (improvement version)
+- `/fem enable N` / `/fem disable N` — control selection (improvement version)
 
-## Known limitations
+## Initial priority
 
-- Elixir item IDs and buff names require live Forever verification before public release.
-- The secure `/click` path may not work in every Forever client build.
-- No consumables are used automatically; the button is only updated outside combat.
-- The addon does not yet account for mutually exclusive elixir effects or character level.
-- The item selected before combat remains queued until the next safe refresh.
-- A failed, missing, or incompatible aura lookup may queue redundant consumables.
+Elixir of Minor Fortitude; Minor Cleric's Elixir; Minor Mageblood Elixir; Elixir of Minor Spirit; Elixir of Wisdom; Elixir of Lesser Defense.
 
-## Release process
+These are development defaults, **not** a verified claim that every elixir stacks. Incorrect aura naming can cause redundant item selection. Do not use valuable elixirs until this has been tested.
 
-After a reviewed merge, update the TOC version, then create and push a tag `vX.Y.Z` matching `## Version: X.Y.Z`. GitHub Actions produces an installable ZIP and a GitHub Release. Manual workflow dispatch builds an artifact but does not publish a release.
+## Releases and development
 
-## Development
+Version tags `vX.Y.Z` trigger the GitHub Actions ZIP release workflow. Read [AGENTS.md](AGENTS.md) for review, security and testing conventions.
 
-See [AGENTS.md](AGENTS.md). This addon is in beta; test `/fem buffs`, item selection, manual activation, aura refresh, combat lockdown, and buff coexistence on the live Forever client before distributing it widely.
+## License
+
+Copyright © 2026 Martin Gammelgaard Rasmussen. Released under the **[MIT License](LICENSE)**, including original repository artwork. World of Warcraft and Blizzard are trademarks of their respective owners.
