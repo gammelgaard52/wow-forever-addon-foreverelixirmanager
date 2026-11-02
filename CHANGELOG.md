@@ -1,5 +1,20 @@
 # Release notes
 
+## 0.4.0
+
+- Add a vector SVG version of the current elixir logo.
+- Restore the simple 0.2.0 controls: list, enable/disable, buffs and status.
+- Restore the original fixed priority and English buff-name matching. No aura-ID
+  setup is required; item and buff-name assumptions still need in-game validation.
+- Remove priority movement, aura mapping, blocking rules and reset commands.
+- Keep per-character on/off choices, level checks, bag refresh and combat protection.
+- Shorten installation and macro setup. Keep automated tests and ZIP validation.
+
+Upgrade: existing on/off choices are retained. Old priority, aura and blocker
+settings are ignored but preserved for rollback. Stronger/replacement effects are
+no longer filtered; disable an entry if its buff name or interactions do not match.
+Live Forever compatibility remains NOT VERIFIED.
+
 ## 0.3.0
 
 Experimental development version; live Forever compatibility is NOT VERIFIED.

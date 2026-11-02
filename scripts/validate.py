@@ -94,7 +94,7 @@ def main():
     lua_tests()
     archive = package(version)
     print(f"PASS: metadata, Lua 5.1 tests, archive contents: {archive.name}")
-    print("NOT VERIFIED: live Forever build, secure clicks, aura mappings, stacking and taint")
+    print("NOT VERIFIED: live Forever build, secure clicks, assumed buff names, stacking and taint")
 
 
 if __name__ == "__main__":
