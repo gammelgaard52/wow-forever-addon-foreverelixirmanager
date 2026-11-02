@@ -1,0 +1,1 @@
+# wow-forever-addon-foreverelixirmanager
