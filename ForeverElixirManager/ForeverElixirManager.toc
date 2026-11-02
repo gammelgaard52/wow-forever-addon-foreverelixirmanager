@@ -1,5 +1,6 @@
 ## Interface: 16001
 ## Title: ForeverElixirManager
 ## Notes: Manually consume the first missing available elixir
-## Version: 0.1.0
+## Version: 0.2.0
+## SavedVariables: ForeverElixirManagerDB
 ForeverElixirManager.lua
