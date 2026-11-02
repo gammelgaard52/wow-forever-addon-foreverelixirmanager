@@ -2,6 +2,7 @@
 
 ## 0.4.0
 
+- Add a vector SVG version of the current elixir logo.
 - Restore the simple 0.2.0 controls: list, enable/disable, buffs and status.
 - Restore the original fixed priority and English buff-name matching. No aura-ID
   setup is required; item and buff-name assumptions still need in-game validation.
