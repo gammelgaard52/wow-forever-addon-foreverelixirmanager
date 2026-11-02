@@ -17,6 +17,7 @@ button:SetAlpha(0)
 button:RegisterForClicks("AnyUp")
 local frame = CreateFrame("Frame")
 local queuedID, lastMessage
+local settings
 local function report(message)
     if lastMessage ~= message then
         print(PREFIX .. message)
@@ -44,7 +45,7 @@ local function update()
     if InCombatLockdown() then return end
     local active, selected, missing = buffs(), nil, false
     for _, e in ipairs(elixirs) do
-        if not active[e.name] then
+        if settings[e.id] ~= false and not active[e.name] then
             missing = true
             if GetItemCount(e.id, false) > 0 then selected = e; break end
         end
@@ -68,13 +69,29 @@ frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 frame:RegisterEvent("BAG_UPDATE")
 frame:RegisterEvent("UNIT_AURA")
 frame:SetScript("OnEvent", function(_, event, unit)
+    if event == "PLAYER_LOGIN" then
+        ForeverElixirManagerDB = ForeverElixirManagerDB or {}
+        settings = ForeverElixirManagerDB
+    end
     if event == "UNIT_AURA" and unit ~= "player" then return end
     update()
 end)
 SLASH_FOREVERELIXIR1 = "/fem"
 SlashCmdList.FOREVERELIXIR = function(arg)
     arg = (arg or ""):lower()
-    if arg == "buffs" then
+    local command, number = arg:match("^(%S+)%s+(%d+)$")
+    number = tonumber(number)
+    if (command == "enable" or command == "disable") and number and elixirs[number] then
+        if InCombatLockdown() then print(PREFIX .. "Configuration unavailable in combat."); return end
+        settings[elixirs[number].id] = command == "enable"
+        lastMessage = nil
+        update()
+        print(PREFIX .. elixirs[number].name .. " " .. (command == "enable" and "enabled" or "disabled"))
+    elseif arg == "list" then
+        for i, e in ipairs(elixirs) do
+            print(PREFIX .. i .. ". " .. e.name .. " [" .. (settings[e.id] == false and "OFF" or "ON") .. "]")
+        end
+    elseif arg == "buffs" then
         local active = buffs()
         for _, e in ipairs(elixirs) do
             print(PREFIX .. e.name .. ": " .. (active[e.name] and "ACTIVE" or "MISSING") ..
@@ -84,6 +101,6 @@ SlashCmdList.FOREVERELIXIR = function(arg)
         print(PREFIX .. (queuedID and ("Queued item ID: " .. queuedID) or "No item queued"))
     else
         update()
-        print(PREFIX .. "Commands: /fem buffs, /fem status")
+        print(PREFIX .. "Commands: /fem list, /fem enable N, /fem disable N, /fem buffs, /fem status")
     end
 end

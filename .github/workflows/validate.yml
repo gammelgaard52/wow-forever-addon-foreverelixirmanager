@@ -1,0 +1,29 @@
+name: Validate addon
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate addon metadata and packaging layout
+        run: |
+          set -euo pipefail
+          test -s ForeverElixirManager/ForeverElixirManager.lua
+          test -s ForeverElixirManager/ForeverElixirManager.toc
+          grep -q '^## Interface: ' ForeverElixirManager/ForeverElixirManager.toc
+          grep -q '^## Version: ' ForeverElixirManager/ForeverElixirManager.toc
+          grep -Fxq 'ForeverElixirManager.lua' ForeverElixirManager/ForeverElixirManager.toc
+          test -s assets/logo.svg
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          ET.parse('assets/logo.svg')
+          toc=Path('ForeverElixirManager/ForeverElixirManager.toc').read_text()
+          assert toc.count('ForeverElixirManager.lua') == 1
+          print('PASS: addon structure and SVG syntax')
+          PY
