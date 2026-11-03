@@ -15,7 +15,7 @@ on:
         required: true
 permissions:
   contents: read
-# Serialize all publication paths, including the legacy tag/upload workflows.
+# Serialize approved release runs to prevent concurrent publication.
 concurrency:
   group: addon-publication
   cancel-in-progress: false

@@ -8,7 +8,9 @@ import re
 import subprocess
 
 TOC = "ForeverElixirManager/ForeverElixirManager.toc"
-PACKAGING = ("scripts/validate.py", ".github/workflows/release.yml")
+# Retain the old workflow path when comparing historical release tags.
+PACKAGING = ("scripts/validate.py", "scripts/publish_release.py",
+             ".github/workflows/publish.yml", ".github/workflows/release.yml")
 VERSION = re.compile(rb"(?m)^## Version: ((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))\r?$")
 
 

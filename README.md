@@ -81,6 +81,8 @@ uses the version prepared by the agent, validates, creates the tag and GitHub
 release, and uploads to CurseForge for automatic publication after moderation.
 Alpha/Beta are GitHub prereleases; Release is stable. See
 [publishing setup and recovery](docs/CURSEFORGE.md#release-a-prepared-version).
+This is the only publication workflow. **Validate addon** runs automatically on
+PRs and main; **Monitor Forever versions** performs compatibility checks.
 Changes to CI, tests, scripts, documentation or repository management do not bump
 the addon version or publish a release. The [repository instructions](AGENTS.md)
 define the version policy.

@@ -102,7 +102,7 @@ def publish(version, release_type, approved=False):
     notes = ROOT / "dist" / "approved-release-notes.md"
     notes.write_text(proposal["notes"], encoding="utf-8")
     flags = ["--prerelease", "--latest=false"] if proposal["prerelease"] else ["--latest"]
-    # GITHUB_TOKEN-created tags do not trigger release.yml; publish in this run.
+    # Tag, GitHub release and CurseForge submission belong to the same approved run.
     gh("release", "create", tag, str(archive), "--verify-tag", "--title",
        f"ForeverElixirManager {tag} ({release_type.title()})", "--notes-file", str(notes), *flags)
     with tempfile.TemporaryDirectory(prefix="fem-published-") as directory:
