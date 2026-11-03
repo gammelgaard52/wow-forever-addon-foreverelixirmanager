@@ -6,7 +6,12 @@ import * as mock from "wowlua:mock"
 local function bags()
     mock.defineItem(2458, { name = "Elixir of Minor Fortitude", minLevel = 1 })
     mock.setBag(0, { slots = 16, items = { [1] = { id = 2458, count = 2 } } })
-    mock.advanceTime(1)
+    -- advanceTime runs timers, not OnUpdate; the addon coalesces on the next frame.
+    mock.nextFrame()
     expect(_G["ForeverElixirSecureBtn"]:GetAttribute("item")).toBe("item:2458")
+    mock.setBag(0, { slots = 16, items = {} })
+    mock.nextFrame()
+    expect(_G["ForeverElixirSecureBtn"]:GetAttribute("item")).toBe(nil)
+    expect(_G["ForeverElixirSecureBtn"]:GetAttribute("type")).toBe(nil)
     expect(mock.errors()).toEqual({})
 end

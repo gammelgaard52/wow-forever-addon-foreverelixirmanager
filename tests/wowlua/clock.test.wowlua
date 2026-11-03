@@ -1,0 +1,18 @@
+import test, expect from "wowlua:test"
+import * as mock from "wowlua:mock"
+
+-- Independent control: distinguish emulator time from a rendered frame.
+@test("advanceTime runs timers and nextFrame runs OnUpdate")
+local function clock()
+    local updates, timers = 0, 0
+    local frame = CreateFrame("Frame")
+    frame:SetScript("OnUpdate", function() updates = updates + 1 end)
+    C_Timer.After(0.1, function() timers = timers + 1 end)
+    mock.advanceTime(1)
+    expect(timers).toBe(1)
+    expect(updates).toBe(0)
+    mock.nextFrame()
+    expect(updates).toBe(1)
+    frame:SetScript("OnUpdate", nil)
+    expect(mock.errors()).toEqual({})
+end

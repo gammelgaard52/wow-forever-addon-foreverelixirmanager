@@ -2,7 +2,7 @@
 
 Reviewed on 3 November 2026, including merged PRs #11 and #12. Each issue was
 checked against existing code before implementation. Issues #5, #3 and #8 are now
-closed with evidence; #4 and #7 track the remaining testing/version-preparation work.
+closed with evidence. The follow-up implementation for #4 and #7 is described below.
 
 ## Prioritized issues
 
@@ -27,12 +27,15 @@ Neither a new test framework nor a successful upload proves these work.
 - #3: completed by PR #12. The first live monitor check
   ([run 41700402569](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41700402569))
   passed with no new untracked version; rebuild and issue creation were skipped.
-- #4: wowlua 0.13.8 was actually evaluated against a disposable copy of the addon.
-  See VALIDATION.md for passing startup/command probes and unresolved event/combat
-  failures. Reproduction tests are retained outside the release package. Do not
-  adopt the emulator as a required compatibility gate until those are understood.
+- #4: wowlua 0.13.8 was evaluated against a disposable copy. The two original
+  failures were caused by advancing timers without running frames. Corrected
+  tests and an independent clock control now pass all five probes, including
+  bag removal and combat exit. Keep this supplementary suite optional; see
+  VALIDATION.md for source evidence and the remaining real-client limitations.
 - #7: PR CI now calculates an advisory semantic-version proposal from committed
-  installed content, preserving versions for management-only changes. See below.
+  installed content, preserving versions for management-only changes. A local
+  preparation command now applies a reviewed proposal and supplied notes on a
+  clean branch, with no automatic commit/tag/publication. See below.
 - #8: the upload path and credentials already exist. On 3 November the owner
   explicitly authorized releasing 0.4.0 as Alpha without live-client testing,
   because they cannot test the game yet. The upload succeeded (file 9426340) and
@@ -93,8 +96,36 @@ when intentionally establishing/breaking the stable contract. The tool supports
 `--bump patch|minor|major`. It does not infer these semantics from commit messages.
 Tests use real temporary Git histories to cover management-only and mixed changes,
 and exercise existing bumps, packaging changes, additions/deletions and regressions.
-No automatic version writer or tag creator is installed. A proposal still requires
-human review and explicit release approval.
+The PR job is advisory. The separate preparation command below writes files only
+when deliberately invoked with `--apply`; tags and publication remain separate.
+
+## Reviewed release preparation
+
+After committing the intended addon changes on a dedicated branch, fetch release
+tags and compare with the latest reachable release (currently `v0.4.0`):
+
+```text
+git fetch origin --tags
+python scripts/prepare_release.py --base v0.4.0 --bump minor
+python scripts/prepare_release.py --base v0.4.0 --bump minor --notes-file /path/to/reviewed-notes.txt --apply
+git diff -- ForeverElixirManager/ForeverElixirManager.toc CHANGELOG.md
+python scripts/validate.py
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+Choose patch/minor/major by reviewing behavior; the tool does not infer feature
+semantics from commit titles. Supply the release-note body without a version
+heading in a file outside the working tree (or an ignored development location).
+The preview writes nothing. Applying writes only the TOC version and a new
+CHANGELOG section, for a PR review. It never commits, pushes, tags or publishes.
+
+Guards require a clean working tree, matching base tag/TOC, an ancestor baseline
+with no newer reachable release tag, and an unused target tag. Application also
+requires a named branch other than main and nonempty reviewed notes. An already
+prepared newer version is kept. Management-only, version-only and packaging-only
+changes produce a decision for review without writes; packaging changes still
+need explicit ZIP comparison. Fetching tags is necessary because this local tool
+cannot detect remote tags it has not fetched.
 
 ## First automated CurseForge upload
 
