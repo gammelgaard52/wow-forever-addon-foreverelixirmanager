@@ -7,12 +7,12 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
 - Use a dedicated branch and pull request for improvements by default.
 - Commit directly to `main` only when explicitly requested.
 - Preserve unrelated edits; do not merge a PR, publish to CurseForge, or deploy an addon without instruction.
-- Tags `vX.Y.Z` initiate GitHub release packaging. Do not create a release tag without approval.
+- The approved release workflow creates tags `vX.Y.Z`. Tag pushes alone do not
+  publish. Do not create a release tag without approval.
 - The manual `publish.yml` workflow combines tag creation, GitHub publication and
   CurseForge submission only after the owner selects Alpha/Beta/Release and
   explicitly approves the run. CurseForge then publishes after moderation. Building
-  or merging this automation does not authorize executing a release. Its GITHUB_TOKEN
-  tag does not trigger the legacy tag workflow, so it publishes within the same run.
+  or merging this automation does not authorize executing a release.
 - Addon versions describe changes to the installed addon. Management-only changes (workflows, scripts, tests, documentation, agent instructions, issue templates and unshipped artwork) must not bump the TOC version, add an addon release-note section, create a release tag or publish a new addon package.
 - CI may rebuild and validate the existing version without releasing it. Version automation must compare shipped content and require an agent-reviewed release decision; commit types or merges alone must not trigger a version bump. Packaging changes require comparing actual ZIPs; never replace a published asset with different bytes.
 - The agent owns semantic classification: inspect the complete shipped diff since
@@ -46,8 +46,9 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
 - Do not commit credentials, tokens, personal logs or local account information.
 - Assets should be original or appropriately licensed; never commit fonts.
 - Use versioned tags for GitHub releases. Publication requires explicit approval
-  through the manual release workflow (or separately approved legacy workflows)
-  and configured credentials. Never treat a merge or monitor rebuild as approval.
+  through the manual release workflow and configured credentials. Never treat a
+  merge or monitor rebuild as approval. Any partial-failure recovery needs explicit
+  approval after inspecting the existing tag, release and upload state.
 
 ## Documentation
 - Keep only maintained source, assets, tests, configuration and operational documentation

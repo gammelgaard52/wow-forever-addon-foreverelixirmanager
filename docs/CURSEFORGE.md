@@ -26,13 +26,11 @@ These environment-variable names are local workflow conventions. The actual API
 authentication field is **X-Api-Token**. Do not paste the token in source files,
 issues, PR comments or chat.
 
-To test the stored token without uploading, run **Check or upload to CurseForge**
-in GitHub Actions with mode **check** and game_version **1.60.1** (the version
-configured for this project). Leave upload authorization unchecked.
-This mode performs only an authenticated catalog GET and prints the matching
-version variables. It rejects missing/ambiguous version names. It cannot verify
-permission to upload to the project, moderation or actual addon compatibility.
-The check also works on a reviewed feature branch; uploads remain main-only.
+**Monitor Forever versions** checks the stored token and configured catalog tuple
+without uploading. Run it on main with **notify** unchecked; it may also rebuild
+the addon if a newer version is detected. Publication performs its own catalog
+check before creating a tag. Neither catalog check establishes upload permission,
+moderation or live-client compatibility.
 
 A maintainer can securely provide the token in their local environment and run:
 
@@ -88,9 +86,9 @@ results remain separate from the live-client checklist in VALIDATION.md.
 After reviewing a new version, update the three configured version variables
 together only when supported by client evidence. The monitor never updates them.
 Closing the issue intentionally suppresses repeats, including after a failed build.
-For another build, rerun the relevant failed job or manually run **Release WoW
-addon** on main (artifact only, no release); record the result in the existing
-issue. Do not delete issues to force duplicate reports. Disable the monitor in
+For another build, rerun the relevant failed job or run `python scripts/validate.py`
+locally; record the result in the existing issue. Do not delete issues to force
+duplicate reports. Disable the monitor in
 Actions to stop scheduled runs; this has no effect on the installed addon.
 
 References: [catalog API](https://support.curseforge.com/support/solutions/articles/9000197321-curseforge-upload-api),
@@ -134,11 +132,9 @@ proof that moderation or public availability is complete. The run summary record
 the source commit, ZIP hash and CurseForge file ID.
 
 The GitHub token receives contents:write only in the publication job. The
-CurseForge secret is exposed only to its publication step. All publication
-workflows share a concurrency group. The new workflow explicitly creates the
-GitHub release because [tags created with GITHUB_TOKEN do not trigger another
-workflow](https://docs.github.com/en/actions/concepts/security/github_token).
-There is no push, PR, schedule or release-event trigger for this workflow.
+CurseForge secret is exposed only to its publication step. Approved runs share
+a concurrency group. This is the only publication workflow; tag pushes, PRs,
+schedules and GitHub release events do not trigger publication.
 
 ## Partial failure and recovery
 
@@ -150,24 +146,14 @@ intentional: a timeout after the CurseForge POST may hide an accepted upload.
   start a new approved run.
 - Tag/GitHub release exists but CurseForge upload did not run: preserve the tag
   and exact ZIP. Inspect the failed step and repair missing GitHub assets only
-  from the validated artifact; do not overwrite an existing asset. Once verified,
-  the existing CurseForge-only workflow can upload that release separately.
+  from the validated artifact; do not overwrite an existing asset. The agent must
+  verify tagged source, release type and exact asset bytes, then obtain approval
+  for a targeted recovery using `scripts/curseforge.py --approve-upload` with the
+  existing tag, verified archive and release notes. Use `--publish-on-approval`
+  only when automatic publication is included in that recovery approval.
 - CurseForge upload was attempted or the result is uncertain: inspect project
   files and the run logs first. If a file exists, use that file. Do not rerun the
   POST or delete/recreate the GitHub tag to bypass the duplicate guard.
-
-## Legacy workflows
-
-Use the combined workflow for new releases. The older workflows support checks,
-artifact-only builds and reviewed recovery:
-
-- **Release WoW addon** builds an artifact when manually run. An approved tag push
-  creates a GitHub release; this legacy path classifies pre-1.0 as prereleases.
-- **Check or upload to CurseForge** provides read-only catalog checks. Recovery
-  uploads require main, upload mode, an existing approved release tag, type and
-  upload approval. The tag must be reachable from main and the release non-draft.
-  Tagged source is validated and its rebuilt ZIP must match the GitHub asset.
-  This legacy path requests manual CurseForge publication after moderation.
 
 ## Agent release preparation
 
