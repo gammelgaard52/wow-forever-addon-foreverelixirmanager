@@ -48,7 +48,8 @@ def check_version(versions, name):
     }
 
 
-def upload_metadata(versions, version_id, version_name, type_id, tag, release_type, changelog):
+def upload_metadata(versions, version_id, version_name, type_id, tag, release_type, changelog,
+                    manual_release=True):
     version_id, type_id = positive_id(version_id), positive_id(type_id)
     if not isinstance(versions, list) or any(not isinstance(row, dict) for row in versions):
         raise ValueError("Unexpected game-version API response")
@@ -70,7 +71,7 @@ def upload_metadata(versions, version_id, version_name, type_id, tag, release_ty
         "displayName": "ForeverElixirManager " + tag,
         "gameVersions": [version_id],
         "releaseType": release_type,
-        "isMarkedForManualRelease": True,
+        "isMarkedForManualRelease": manual_release,
     }
 
 
@@ -112,6 +113,8 @@ def main(argv=None):
     parser.add_argument("--archive", type=Path)
     parser.add_argument("--changelog", type=Path)
     parser.add_argument("--release-type", choices=("alpha", "beta", "release"), default="alpha")
+    parser.add_argument("--publish-on-approval", action="store_true",
+                        help="Authorize automatic CurseForge publication after moderation")
     args = parser.parse_args(argv)
     if not args.list_versions and args.check_version is None and not args.approve_upload:
         raise ValueError("Upload requires explicit --approve-upload authorization")
@@ -136,12 +139,15 @@ def main(argv=None):
         os.environ.get("CURSEFORGE_GAME_VERSION_NAME", ""),
         os.environ.get("CURSEFORGE_GAME_VERSION_TYPE_ID", ""),
         args.tag, args.release_type, args.changelog.read_text(encoding="utf-8"),
+        manual_release=not args.publish_on_approval,
     )
     body, content_type = multipart(metadata, args.archive)
     result = api(f"/projects/{project}/upload-file", token, body, content_type)
     if not isinstance(result, dict) or type(result.get("id")) is not int or result["id"] <= 0:
         raise ValueError("Upload result uncertain; inspect project files before retrying")
-    print(f"PASS: uploaded CurseForge file {result['id']}; moderation/manual release still required")
+    publication = "automatic publication after moderation" if args.publish_on_approval else "moderation/manual release still required"
+    print(f"PASS: uploaded CurseForge file {result['id']}; {publication}")
+    return result["id"]
 
 
 if __name__ == "__main__":

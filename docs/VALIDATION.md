@@ -5,7 +5,7 @@ effect groups. It retains modern item APIs, level checks, per-character toggles,
 combat protection and English-name matching. The name matching remains an explicit
 assumption, not confirmed client behavior. See [rank evidence](ELIXIR_RANKS.md)
 for the 24 supported items, source builds, fallback and equal/stronger-effect policy.
-This candidate has not been published or tested in the game.
+Live-client behavior remains NOT VERIFIED.
 
 ## API evidence and limits
 
@@ -42,40 +42,18 @@ ordinary API failures; it does not grant access to protected data or actions.
 The invisible button is alpha-zero and off-screen, not explicitly hidden.
 Whether the engine permits its macro-triggered click remains NOT VERIFIED.
 
-## Candidate data ledger
+## Item and aura assumptions
 
-The original six IDs below remain the saved group keys. See [the expanded rank
-ledger](ELIXIR_RANKS.md) for 0.5.0. This original ledger is historical; none of these
-entries are a certified live database. The names below
-are labels from the existing project and are also the assumed exact aura names.
-Required levels come from client item data.
+The maintained [rank ledger](ELIXIR_RANKS.md) records all supported items and their
+Forever sources. Required levels come from client item data. Each group's original
+item ID remains its saved setting key.
 
-| Candidate ID | Label | Required level / duration evidence | Aura name / spell ID | Stacking / higher ranks |
-|---|---|---|---|---|
-| 2458 | Elixir of Minor Fortitude | Forever database reports 2 / 1 hour | NOT VERIFIED | NOT VERIFIED |
-| 250330 | Minor Cleric's Elixir | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED |
-| 250339 | Minor Mageblood Elixir | Forever database reports 5 / 30 minutes | NOT VERIFIED | NOT VERIFIED |
-| 250344 | Elixir of Minor Spirit | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED |
-| 3383 | Elixir of Wisdom | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED |
-| 3389 | Elixir of Lesser Defense | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED |
-
-The [Forever Fortitude entry](https://www.wowhead.com/forever/item=2458/elixir-of-minor-fortitude)
-and [Forever Mageblood entry](https://www.wowhead.com/forever/item=250339/minor-mageblood-elixir)
-provided those two item-level observations. Other database requests were
-inaccessible or insufficient to establish aura/replacement rules. Old Classic
-comments and Classic database fields were not accepted as Forever verification.
-Even those two entries have no in-game PASS. Remaining buff duration is not used
-for selection: a recognized equal/stronger effect is retained until it disappears;
-a stronger carried rank can be offered as a manual upgrade.
-
-The addon assumes each buff has exactly the English item label shown above,
-as in 0.2.0. This is NOT VERIFIED and may fail even on an English client. A
-localized item name is used for chat feedback, not as proof of an aura name.
-There is no Classic API fallback or spell-ID mapping. Version 0.5.0 filters
-equal/stronger recognized effects within the documented groups.
-If `/fem buffs` shows an active effect as MISSING, disable that entry. Likewise,
-disable entries whose stronger/replacement interactions have not been checked.
-The simplified version can otherwise queue an unnecessary replacement.
+Aura recognition assumes the exact English item labels in that ledger. Localized
+item names and use-spell names do not establish the resulting aura names. There is
+no Classic API fallback or spell-ID mapping. Equal/stronger recognized effects
+prevent downgrades; a stronger carried rank may be offered as a manual upgrade.
+Disable a group if `/fem buffs` misidentifies its active effect or its replacement
+behavior is unverified.
 
 ## Automated validation
 
@@ -100,70 +78,19 @@ Python validates exact TOC entries, metadata, tag/version agreement and actual Z
 members/bytes. The package is an allowlist with one ForeverElixirManager/ root;
 LICENSE is included to satisfy MIT redistribution requirements.
 
-Local development results (2 November 2026):
+GitHub Actions reports current results on each pull request. Do not execute
+release/upload workflows merely to test publication. Passing automated tests does
+not verify real secure clicks, combat transitions, item/aura data, stacking or taint.
 
-| Check | Result |
-|---|---|
-| Lua 5.1 parse/load and 18 mocked scenarios | PASS (Lupa Lua 5.1 runtime) |
-| Nine Python distribution/guard tests | PASS |
-| TOC version/interface structure and referenced file | PASS; actual current client interface NOT VERIFIED |
-| ZIP root, exact members, byte integrity and repeatability | PASS |
-| Release/upload workflow definitions | Unchanged; not executed for this change |
-| Real secure clicks, combat transitions, item/aura/stacking data and taint | NOT VERIFIED |
-| CurseForge authenticated catalog and upload | BLOCKED pending configuration/approval |
+## Optional wowlua tests
 
-GitHub Actions results are reported on the pull request. Release/upload workflows
-must not be executed merely to test publication.
-
-Update, 3 November 2026: local validation passes 18 mocked Lua scenarios and
-12 Python distribution tests. The authenticated CurseForge catalog check is now
-PASS; see [the recorded run and configuration](CURSEFORGE.md). The older table
-above records the 2 November state. Project upload permission, actual automated
-upload and all live-client results were still NOT VERIFIED at that point.
-Later on 3 November, the approved Alpha upload returned file 9426340; see
-[the upload evidence](CURSEFORGE.md). This verifies submission only. All live-client
-results remain NOT VERIFIED. The emulator investigation below records a later fix
-to the test's frame scheduling, without changing the released addon.
-
-## wowlua experiment (issue #4)
-
-On 3 November 2026, the pinned
-[wowlua v0.13.8 release](https://github.com/DomenikIrrgang/wowlua/releases/tag/v0.13.8)
-was evaluated in an isolated temporary copy of the addon. The downloaded Windows
-x86_64 ZIP matched its release SHA-256:
+The supplementary suite uses [wowlua v0.13.8](https://github.com/DomenikIrrgang/wowlua/releases/tag/v0.13.8)
+and Blizzard UI to test startup, commands, bag refresh, combat transitions and
+frame scheduling. It remains outside required CI and the distributed addon.
+The reviewed Windows x86_64 ZIP has SHA-256
 `a150e84df47d15e3878624cd3137afa20f15165aff4d3e07f6ce604208e22ec4`.
-No addon was deployed and no framework/UI files are included in the release ZIP.
 
-The [framework's testing guide](https://github.com/DomenikIrrgang/wowlua/blob/v0.13.8/docs/guide/testing.md)
-documents the camelot emulator and optional Blizzard UI. Without that UI,
-RegisterStateDriver is unavailable in this experiment and the addon correctly
-leaves the queue disabled. With `test.blizzard-ui=true`, wowlua fetched UI source
-revision `172a387e3ab8`. The first run passed startup/commands but failed bag and
-combat probes: those tests used `mock.advanceTime(1)`, which runs timers without
-running frame `OnUpdate` handlers. Both the addon's coalesced bag refresh and the
-Blizzard state driver require a frame. This distinction is visible in the pinned
-[engine clock implementation](https://github.com/DomenikIrrgang/wowlua/blob/v0.13.8/crates/wowlua-engine/src/clock.rs)
-(`advance` versus `advance_frames`). A standalone clock control reproduces it.
-
-After using `mock.nextFrame()` for frame-driven behavior, the same addon and UI
-revision produce these results using synthetic item data:
-
-| Probe | Result |
-|---|---|
-| Startup creates the secure button | PASS |
-| Commands change per-character on/off settings | PASS |
-| Bag events queue and remove an item on the next frame | PASS |
-| Combat disables action, freezes selection, then refreshes on exit | PASS |
-| Independent clock/timer versus frame control | PASS |
-
-The original failures were test-driver errors, not established addon bugs. No
-addon code or secure restrictions were changed. These probes add coverage using
-Blizzard UI rather than our own state-driver mock; they still do not validate
-actual secure clicks or real item/aura data. Keep the existing Lua/Python suite
-as required CI. Keep this supplementary suite optional: it downloads external UI
-source and uses an emulator, so it must not certify compatibility or publication.
-
-Reproduce with the reviewed binary (not installed by this repository):
+Run with that binary installed outside the repository:
 
 ```text
 python scripts/probe_wowlua.py --binary /path/to/wowlua
@@ -171,23 +98,15 @@ python scripts/probe_wowlua.py --binary /path/to/wowlua
 
 The runner requires exactly 0.13.8, creates a disposable addon copy, enables the
 Blizzard UI and runs `tests/wowlua/*.test.wowlua`. UI data is cached under ignored
-`dist/wowlua-cache`; later runs can add `--offline`. It returns the real failing
-exit status (currently 5 passed / 0 failed). Tests run in separate emulator worlds
-so combat and clock controls do not contaminate other probes.
+`dist/wowlua-cache`; later runs can add `--offline`. Tests use separate emulator
+worlds and the runner returns the failing exit status.
 
-WoWUnit was also reviewed from its
-[maintainer README](https://github.com/Jaliborc/WoWUnit/blob/master/README.md).
-It runs in the game and does not supply the unavailable Forever client. It has
-not been installed or claimed as compatible. This completes the framework
-evaluation in #4; real-client testing remains on the separate checklist below.
-
-## Alpha distribution decision
-
-On 3 November 2026 the owner authorized an experimental 0.4.0 Alpha release
-without live-client tests because they cannot test the game yet. This overrides
-the usual pre-release checklist requirement for this specific Alpha; all missing
-client results and the emulator discrepancies above remain disclosed. GitHub
-marks pre-1.0 releases as prereleases. CurseForge classification is Alpha.
+Use `mock.nextFrame()` for frame-driven behavior. `mock.advanceTime()` advances
+timers without running `OnUpdate`, which the addon's refresh and the Blizzard
+state driver require. See the pinned [clock implementation](https://github.com/DomenikIrrgang/wowlua/blob/v0.13.8/crates/wowlua-engine/src/clock.rs)
+and [testing guide](https://github.com/DomenikIrrgang/wowlua/blob/v0.13.8/docs/guide/testing.md).
+The reviewed UI source revision is `172a387e3ab8`. Emulator results cannot certify
+secure execution or real item/aura data; use the client checklist below.
 
 ## In-game checklist - all NOT VERIFIED until a tester records results
 

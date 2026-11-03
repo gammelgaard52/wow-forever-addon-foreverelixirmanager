@@ -103,6 +103,16 @@ class DistributionTests(unittest.TestCase):
         self.assertIn(b'"releaseType": "alpha"', body)
         self.assertIn("boundary=fem-", content_type)
 
+    def test_automatic_publication_requires_explicit_selection(self):
+        rows = [{"id": 123, "name": "test-version", "gameVersionTypeID": 456}]
+        for channel in ("alpha", "beta", "release"):
+            held = cf.upload_metadata(rows, "123", "test-version", "456", "v0.5.0", channel, "Notes")
+            automatic = cf.upload_metadata(rows, "123", "test-version", "456", "v0.5.0", channel,
+                                           "Notes", manual_release=False)
+            self.assertTrue(held["isMarkedForManualRelease"])
+            self.assertFalse(automatic["isMarkedForManualRelease"])
+            self.assertEqual(automatic["releaseType"], channel)
+
     def test_approved_upload_contract_with_mocked_network(self):
         path = validation.package(validation.metadata())
         config = {

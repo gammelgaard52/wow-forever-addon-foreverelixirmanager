@@ -1,5 +1,6 @@
 """Propose addon versions from committed content. Never write versions or tags."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -38,6 +39,16 @@ def next_version(version, bump):
     if bump == "minor":
         return f"{major}.{minor + 1}.0"
     return f"{major}.{minor}.{patch + 1}"
+
+
+def shipped_digest(files):
+    """Bind a semantic decision to installed content, with the TOC version normalized."""
+    digest = hashlib.sha256()
+    for name in sorted(files):
+        if name not in PACKAGING:
+            data = files[name]
+            digest.update(name.encode("utf-8") + b"\0" + str(len(data)).encode() + b"\0" + data)
+    return digest.hexdigest()
 
 
 def plan(base_version, head_version, base_files, head_files, bump="patch"):
@@ -86,10 +97,10 @@ Comparison: `{base[:12]}` to `{head[:12]}`.
 {paths}
 
 This is an advisory proposal, not a version write or release authorization.
-The default patch proposal is a minimum; reviewers must choose minor/major for
+The default patch proposal is a minimum; the agent must choose minor/major for
 new features or breaking changes, including the project's pre-1.0 policy.
 Packaging changes require ZIP comparison, even when addon source is unchanged.
-Only explicitly approved release tags and separate upload approval publish files.
+The owner selects Alpha/Beta/Release and approves the combined publication workflow.
 """
 
 

@@ -31,7 +31,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: curseforge-${{ inputs.tag }}
+  group: addon-publication
   cancel-in-progress: false
 jobs:
   check:

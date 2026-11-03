@@ -46,7 +46,7 @@ class ReleasePreparationTests(unittest.TestCase):
 
     def run_prepare(self, *args, success=True):
         result = subprocess.run([sys.executable, str(SCRIPT), "--base", "v0.4.0",
-                                 "--bump", "minor", *args], cwd=self.root,
+                                 "--bump", "minor", "--reason", "Reviewed fixture feature", *args], cwd=self.root,
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result
@@ -66,8 +66,8 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertIn('"suggested_version": "0.5.0"', result.stdout)
         self.assertEqual(self.git("status", "--porcelain"), b"")
         self.run_prepare("--apply", "--notes-file", str(self.notes))
-        self.assertEqual(set(self.git("diff", "--name-only").decode().splitlines()),
-                         {TOC, "CHANGELOG.md"})
+        self.assertEqual(set(self.git("diff", "--name-only").decode().splitlines()), {TOC, "CHANGELOG.md"})
+        self.assertIn('"bump": "minor"', (self.root / "release-plan.json").read_text())
         self.assertIn("## Version: 0.5.0", (self.root / TOC).read_text())
         self.assertIn("## 0.5.0\n\n- Reviewed new behavior.", (self.root / "CHANGELOG.md").read_text())
         self.assertEqual(self.git("rev-parse", "HEAD"), head)
