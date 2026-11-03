@@ -7,6 +7,15 @@ Automated upload has not been tested; future uploads still require explicit appr
 
 ## Supported API
 
+The filename and GitHub tag use the addon's own version. WoW versions are
+compatibility metadata, not a replacement for addon versioning. The owner
+withdrew the WoW-version filename proposal in issue #13 before any release.
+
+| Addon version | ZIP filename | Target WoW version | Interface | Evidence |
+|---|---|---|---|---|
+| 0.3.0 | `ForeverElixirManager-0.3.0.zip` | 1.60.1 | 16001 | Manual upload approved, per owner |
+| 0.4.0 | `ForeverElixirManager-0.4.0.zip` | 1.60.1 | 16001 | Alpha authorized; actual client compatibility NOT VERIFIED |
+
 The official [CurseForge Upload API](https://support.curseforge.com/support/solutions/articles/9000197321-curseforge-upload-api)
 documents author tokens in the `X-Api-Token` header, multipart file submission,
 version catalogs, release types and Markdown changelogs. This is the author upload
