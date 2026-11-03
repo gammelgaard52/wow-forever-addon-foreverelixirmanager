@@ -82,3 +82,7 @@ The Lua harness uses synthetic bag, level and aura data to test all six groups,
 fallback, upgrades, equal-strength suppression, settings persistence, cache refresh,
 group priority and combat suspension. Passing these tests validates that policy's
 logic only. Keep the live checklist in [VALIDATION.md](VALIDATION.md).
+
+Local candidate checks: 28 Lua scenarios and 29 Python tests PASS. The 0.5.0 ZIP
+has only the addon Lua file, TOC and LICENSE in one ForeverElixirManager/ folder;
+TOC remains interface 16001. No tag, release or CurseForge upload was created.
