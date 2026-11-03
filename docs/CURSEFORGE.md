@@ -18,8 +18,12 @@ The script sends the ZIP as `file` and JSON as `metadata`. It chooses `alpha`,
 `beta` or `release`, includes the changelog, and requests manual release after
 moderation. It rejects redirects rather than forwarding credentials elsewhere.
 A successful response is an uploaded file ID, not proof of approval or visibility.
-The authenticated endpoint and the actual Forever catalog entries remain
-**NOT VERIFIED** until credentials are configured and a read-only query succeeds.
+**PASS, 3 November 2026:** the authenticated catalog check succeeded in
+[GitHub Actions run 41695903589](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41695903589).
+The unique 1.60.1 entry (matching the owner's manually uploaded Forever file)
+returned version ID 17053 and type ID 88568. The upload job was skipped.
+Project-specific upload permission and automated file submission remain
+**NOT VERIFIED**; catalog access does not prove either.
 
 ## Configure GitHub Actions
 
@@ -29,9 +33,9 @@ In this repository's **Settings → Secrets and variables → Actions**, configu
 |---|---|---|
 | Secret | `CURSEFORGE_API_TOKEN` | Author token generated at [CurseForge API Tokens](https://authors.curseforge.com/account/api-tokens), with access to this project |
 | Variable | `CURSEFORGE_PROJECT_ID` | `1780660` |
-| Variable | `CURSEFORGE_GAME_VERSION_ID` | Numeric ID of the supported Forever client version from the upload API catalog |
-| Variable | `CURSEFORGE_GAME_VERSION_NAME` | Exact `name` returned for that entry |
-| Variable | `CURSEFORGE_GAME_VERSION_TYPE_ID` | Exact `gameVersionTypeID` for that Forever entry |
+| Variable | `CURSEFORGE_GAME_VERSION_ID` | `17053` |
+| Variable | `CURSEFORGE_GAME_VERSION_NAME` | `1.60.1` |
+| Variable | `CURSEFORGE_GAME_VERSION_TYPE_ID` | `88568` |
 
 These environment-variable names are local workflow conventions. The actual API
 authentication field is **X-Api-Token**. Do not paste the token in source files,
@@ -88,5 +92,6 @@ bypass that review. Alpha/beta/release classification and review approval are
 separate. The guide also says a project needs an approved Release file before it
 syncs to the CurseForge app; do not label an untested build Release just for visibility.
 
-**BLOCKED:** actual publication needs the configured token, project/version values,
-completed in-game checks and explicit approval. Nothing has been uploaded here.
+The token and all four repository variables are configured. Future automated
+publication still needs a validated version and explicit approval. Only the
+read-only connection check has run; no file has been uploaded by this integration.
