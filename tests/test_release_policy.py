@@ -52,11 +52,54 @@ class SemanticPolicyTests(unittest.TestCase):
     def decision(self, version="0.5.0", bump="minor", reason="Reviewed feature", base="v0.4.0"):
         (self.root / versions.TOC).write_text("## Version: " + version + "\n")
         files = {name: (self.root / name).read_bytes() for name in
-                 (versions.TOC, "ForeverElixirManager/ForeverElixirManager.lua", "LICENSE")}
+                 (versions.TOC, "ForeverElixirManager/ForeverElixirManager.lua", "LICENSE", *versions.DISTRIBUTION)
+                 if (self.root / name).exists()}
         files[versions.TOC] = versions.VERSION.sub(b"## Version: <version>", files[versions.TOC])
         (self.root / "release-plan.json").write_text(json.dumps(
             {"base_tag": base, "version": version, "bump": bump, "reason": reason,
-             "content_sha256": versions.shipped_digest(files)}))
+             "content_sha256": versions.shipped_digest(files),
+             "publication_sha256": versions.publication_digest(files)}))
+
+    def test_curseforge_only_patch_requires_review_and_new_version_after_tag(self):
+        self.git("tag", "v0.5.0")
+        script = self.root / "scripts/curseforge.py"
+        script.parent.mkdir()
+        script.write_text("correct release notes")
+        self.commit()
+        with self.assertRaisesRegex(ValueError, "Publication changed after"):
+            policy.check_policy()
+        self.decision("0.5.1", "patch", "Correct CurseForge notes", "v0.5.0")
+        self.commit()
+        self.assertEqual(policy.check_policy()["version"], "0.5.1")
+        script.write_text("another unreviewed metadata change")
+        self.commit()
+        with self.assertRaisesRegex(ValueError, "Publication differs"):
+            policy.check_policy()
+        self.decision("0.5.1", "patch", "Review both metadata fixes", "v0.5.0")
+        self.commit()
+        self.assertEqual(policy.check_policy()["version"], "0.5.1")
+        self.git("tag", "v0.5.1")
+        workflow = self.root / ".github/workflows/publish.yml"
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text("GitHub-only workflow update")
+        self.commit()
+        self.assertEqual(policy.check_policy()["version"], "0.5.1")
+        (self.root / "CHANGELOG.md").write_text("changed externally visible release notes")
+        self.commit()
+        with self.assertRaisesRegex(ValueError, "Publication changed after"):
+            policy.check_policy()
+
+    def test_publication_change_requires_digest_even_when_addon_digest_matches(self):
+        self.lua.write_text("original")
+        (self.root / "CHANGELOG.md").write_text("correct release notes")
+        self.decision("0.4.1", "patch", "Correct release notes")
+        path = self.root / "release-plan.json"
+        decision = json.loads(path.read_text())
+        del decision["publication_sha256"]
+        path.write_text(json.dumps(decision))
+        self.commit()
+        with self.assertRaisesRegex(ValueError, "Publication differs"):
+            policy.check_policy()
 
     def test_additional_unreleased_code_requires_new_agent_review(self):
         self.lua.write_text("another feature after the previous review")

@@ -8,9 +8,11 @@ import re
 import subprocess
 
 TOC = "ForeverElixirManager/ForeverElixirManager.toc"
-# Retain the old workflow path when comparing historical release tags.
-PACKAGING = ("scripts/validate.py", "scripts/publish_release.py",
-             ".github/workflows/publish.yml", ".github/workflows/release.yml")
+# Workflows are GitHub-only. Review the output of packaging/publication code,
+# including metadata visible in CurseForge administration and on the project page.
+PACKAGING = ("scripts/validate.py",)
+PUBLICATION = ("scripts/publish_release.py", "scripts/curseforge.py", "CHANGELOG.md")
+DISTRIBUTION = PACKAGING + PUBLICATION
 VERSION = re.compile(rb"(?m)^## Version: ((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))\r?$")
 
 
@@ -22,7 +24,7 @@ def snapshot(ref):
     # Resolve first: never interpolate caller-controlled refs into git paths/options.
     commit = git("rev-parse", "--verify", "--end-of-options", ref + "^{commit}").decode().strip()
     names = git("ls-tree", "-r", "--name-only", "-z", commit, "--",
-                "ForeverElixirManager", "LICENSE", *PACKAGING).decode().split("\0")
+                "ForeverElixirManager", "LICENSE", *DISTRIBUTION).decode().split("\0")
     files = {name: git("show", commit + ":" + name) for name in names if name}
     if TOC not in files or "LICENSE" not in files:
         raise ValueError("Comparison requires the addon TOC and LICENSE in both revisions")
@@ -47,8 +49,19 @@ def shipped_digest(files):
     """Bind a semantic decision to installed content, with the TOC version normalized."""
     digest = hashlib.sha256()
     for name in sorted(files):
-        if name not in PACKAGING:
+        if name not in DISTRIBUTION:
             data = files[name]
+            digest.update(name.encode("utf-8") + b"\0" + str(len(data)).encode() + b"\0" + data)
+    return digest.hexdigest()
+
+
+def publication_digest(files):
+    """Bind the review to packaging, publication code and release notes separately."""
+    digest = hashlib.sha256()
+    for name in sorted(files):
+        if name in DISTRIBUTION:
+            # These inputs are text; Git checkouts may use CRLF on Windows.
+            data = files[name].replace(b"\r\n", b"\n")
             digest.update(name.encode("utf-8") + b"\0" + str(len(data)).encode() + b"\0" + data)
     return digest.hexdigest()
 
@@ -59,33 +72,32 @@ def plan(base_version, head_version, base_files, head_files, bump="patch"):
         raise ValueError("Addon version must not go backwards")
     changed = sorted(name for name in base_files.keys() | head_files.keys()
                      if base_files.get(name) != head_files.get(name))
-    content = [name for name in changed if name not in PACKAGING]
+    content = [name for name in changed if name not in DISTRIBUTION]
     packaging = [name for name in changed if name in PACKAGING]
+    publication = [name for name in changed if name in PUBLICATION]
     result = {"base_version": base_version, "current_version": head_version,
               "content_changes": content, "packaging_changes": packaging,
+              "publication_changes": publication,
               "suggested_version": head_version, "bump": "none"}
-    if content:
-        result["decision"] = "addon-change"
+    if content or packaging or publication:
+        result["decision"] = "addon-change" if content else "publication-change"
         if head_key == base_key:
             result.update(suggested_version=next_version(base_version, bump), bump=bump)
-            result["reason"] = "Installed content changed; review this proposal before preparing a release."
+            result["reason"] = "Addon or publication changed; review the semantic increment and compare ZIPs for packaging changes."
         else:
             result["reason"] = "A newer addon version is already prepared; do not bump it again."
     elif head_key != base_key:
         result["decision"] = "version-only-review"
         result["reason"] = "Only the version changed in installed content. Verify an intentional release preparation; management work does not justify this bump."
-    elif packaging:
-        result["decision"] = "packaging-review"
-        result["reason"] = "Packaging tooling changed. Compare actual ZIPs before deciding whether shipped content changes; no automatic bump."
     else:
         result["decision"] = "management-only"
-        result["reason"] = "Installed content and packaging are unchanged. Keep the addon version; no release is needed."
+        result["reason"] = "Addon, packaging and publication are unchanged. Keep the addon version; no release is needed."
     return result
 
 
 def summary(result, base, head):
-    changed = result["content_changes"] + result["packaging_changes"]
-    paths = "\n".join("- `" + name + "`" for name in changed) or "- No installed-content or packaging changes."
+    changed = result["content_changes"] + result["packaging_changes"] + result["publication_changes"]
+    paths = "\n".join("- `" + name + "`" for name in changed) or "- No addon or publication changes."
     return f"""## Addon version assessment
 
 Comparison: `{base[:12]}` to `{head[:12]}`.

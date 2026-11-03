@@ -38,11 +38,14 @@ class VersionPlanTests(unittest.TestCase):
         self.assertEqual(result["suggested_version"], "0.4.0")
         self.assertEqual(result["bump"], "none")
 
-    def test_packaging_changes_require_review_instead_of_auto_bump(self):
-        for path in versions.PACKAGING:
+    def test_packaging_and_publication_changes_propose_patch(self):
+        for path in versions.DISTRIBUTION:
             result = versions.plan("0.4.0", "0.4.0", self.files, {**self.files, path: b"new"})
-            self.assertEqual(result["decision"], "packaging-review")
-            self.assertEqual(result["suggested_version"], "0.4.0")
+            self.assertEqual(result["decision"], "publication-change")
+            self.assertEqual(result["suggested_version"], "0.4.1")
+            prepared = versions.plan("0.4.0", "0.4.1", self.files, {**self.files, path: b"new"})
+            self.assertEqual(prepared["suggested_version"], "0.4.1")
+            self.assertEqual(prepared["bump"], "none")
 
     def test_version_only_and_regression_are_not_treated_as_features(self):
         result = versions.plan("0.4.0", "0.4.1", self.files, self.files)
@@ -74,7 +77,9 @@ class VersionPlanTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(data.replace(b"<version>", b"0.4.0"))
             base = commit()
-            for name in ["README.md", "AGENTS.md", "tests/check.py", "scripts/monitor.py", ".github/workflows/validate.yml"]:
+            for name in ["README.md", "AGENTS.md", "tests/check.py", "scripts/monitor.py",
+                         ".github/workflows/validate.yml", ".github/workflows/publish.yml",
+                         ".github/workflows/release.yml"]:
                 path = root / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("management change", encoding="utf-8")
@@ -90,6 +95,14 @@ class VersionPlanTests(unittest.TestCase):
                 with self.assertRaises(subprocess.CalledProcessError):
                     versions.snapshot("--not-a-ref")
             self.assertEqual(git("status", "--porcelain"), b"")
+
+    def test_publication_digest_is_separate_and_normalizes_checkout_newlines(self):
+        files = {**self.files, "scripts/curseforge.py": b"old\n"}
+        changed = {**files, "scripts/curseforge.py": b"new\n"}
+        self.assertEqual(versions.shipped_digest(files), versions.shipped_digest(changed))
+        self.assertNotEqual(versions.publication_digest(files), versions.publication_digest(changed))
+        self.assertEqual(versions.publication_digest(changed), versions.publication_digest(
+            {**changed, "scripts/curseforge.py": b"new\r\n"}))
 
 
 if __name__ == "__main__":

@@ -14,20 +14,30 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
   clicks **Run workflow** on main. That manual dispatch is publication approval;
   there is no additional approval checkbox. CurseForge publishes after moderation. Building
   or merging this automation does not authorize executing a release.
-- Addon versions describe changes to the installed addon. Management-only changes (workflows, scripts, tests, documentation, agent instructions, issue templates and unshipped artwork) must not bump the TOC version, add an addon release-note section, create a release tag or publish a new addon package.
+- Addon versions describe changes observable outside GitHub: installed addon behavior,
+  installation packages, and CurseForge administration or the public project page,
+  including display names, release notes, links and publication metadata. Document
+  every such change in CHANGELOG.md and prepare the appropriate version increment.
+  GitHub-only changes (for example workflows, tests, repository-only documentation,
+  agent instructions and issue templates) do not bump the addon version or add an
+  addon release-note section. Classify by external effect, not merely file extension.
 - Exception: an explicit owner request for a version-only patch may be recorded in
   `release-plan.json` as `version_only_approval`, scoped to its exact base/version.
   Keep the addon content digest unchanged. Preparation does not authorize publication.
-- CI may rebuild and validate the existing version without releasing it. Version automation must compare shipped content and require an agent-reviewed release decision; commit types or merges alone must not trigger a version bump. Packaging changes require comparing actual ZIPs; never replace a published asset with different bytes.
-- The agent owns semantic classification: inspect the complete shipped diff since
+- CI may rebuild and validate the existing version without releasing it. Version automation must compare addon and publication changes and require an agent-reviewed release decision; commit types or merges alone must not trigger a version bump. Packaging changes require comparing actual ZIPs; never replace a published asset with different bytes.
+- The agent owns semantic classification: inspect the complete addon and publication diff since
   the previous release and choose patch for compatible fixes, minor for compatible
   features, or major for breaking behavior/settings/command contracts. Record the
   highest applicable impact and its reason in release-plan.json, prepare the exact
-  next version and notes, bind the decision to the shipped content digest, and run
+  next version and notes, bind the decision to the shipped content and publication digests, and run
   release_policy.py. Do not ask the owner to classify
   code changes. Alpha/Beta/Release is their distribution choice, independent of SemVer.
 - Apply the same patch/minor/major contract before 1.0. Preserve an already prepared
   version when its increment still covers all unreleased changes.
+- Compatible corrections to externally visible CurseForge presentation are patch
+  changes even when Lua is unchanged. Review external project-page/admin changes
+  as well as the paths tracked by version_plan.py; Git cannot detect manual edits
+  made on CurseForge. Release preparation does not authorize publication.
 
 ## Before changes
 1. Read this file, README, TOC, Lua source, and relevant workflow files.

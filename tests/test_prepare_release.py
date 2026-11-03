@@ -51,13 +51,22 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result
 
-    def test_management_and_packaging_never_write_versions(self):
-        for path in ["README.md", "scripts/validate.py"]:
+    def test_management_and_workflows_never_write_versions(self):
+        for path in ["README.md", ".github/workflows/publish.yml"]:
             self.write(path, "management\n")
             self.commit()
             self.run_prepare("--apply", "--notes-file", str(self.notes))
             self.assertEqual(self.git("status", "--porcelain"), b"")
             self.assertIn("0.4.0", (self.root / TOC).read_text())
+
+    def test_curseforge_only_change_prepares_version_and_notes(self):
+        self.write("scripts/curseforge.py", "correct externally visible release notes\n")
+        self.commit()
+        result = self.run_prepare("--bump", "patch", "--apply", "--notes-file", str(self.notes))
+        self.assertIn('"decision": "publication-change"', result.stdout)
+        self.assertIn("## Version: 0.4.1", (self.root / TOC).read_text())
+        self.assertIn("## 0.4.1", (self.root / "CHANGELOG.md").read_text())
+        self.assertIn('"publication_sha256"', (self.root / "release-plan.json").read_text())
 
     def test_preview_and_apply_change_only_version_and_notes_without_git_mutations(self):
         self.change_addon()

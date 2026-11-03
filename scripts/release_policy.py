@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 import validate
-from version_plan import git, next_version, plan, shipped_digest, snapshot
+from version_plan import git, next_version, plan, publication_digest, shipped_digest, snapshot
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -13,7 +13,9 @@ def check_policy():
     version = validate.metadata()
     decision = json.loads((ROOT / "release-plan.json").read_text(encoding="utf-8"))
     required = {"base_tag", "version", "bump", "reason", "content_sha256"}
-    if not isinstance(decision, dict) or set(decision) not in (required, required | {"version_only_approval"}):
+    optional = {"version_only_approval", "publication_sha256"}
+    if (not isinstance(decision, dict) or not required <= set(decision)
+            or set(decision) - required - optional):
         raise ValueError("A reviewed release-plan.json with base_tag/version/bump/reason/content_sha256 is required")
     base = decision["base_tag"]
     if not isinstance(base, str) or not re.fullmatch("v" + validate.VERSION_RE, base):
@@ -41,18 +43,24 @@ def check_policy():
     if "version_only_approval" in decision:
         approval = decision["version_only_approval"]
         if (not isinstance(approval, str) or not approval.strip()
-                or decision["bump"] != "patch" or result["decision"] != "version-only-review"):
+                or decision["bump"] != "patch" or result["content_changes"]):
             raise ValueError("Owner-approved version-only releases require a documented request, patch increment and unchanged addon content")
-    elif result["decision"] != "addon-change":
-        raise ValueError("A new addon version requires changed shipped content, not management work")
+    elif result["decision"] not in ("addon-change", "publication-change"):
+        raise ValueError("A new addon version requires changed shipped content or publication, not management work")
     if "v" + version in tags:
         tagged_sha, tagged_version, tagged_files = snapshot("refs/tags/v" + version)
         git("merge-base", "--is-ancestor", tagged_sha, head)
         changes = plan(tagged_version, head_version, tagged_files, head_files)
         if changes["content_changes"]:
             raise ValueError("Shipped content changed after this version was tagged; prepare a new version")
+        if changes["packaging_changes"] or changes["publication_changes"]:
+            raise ValueError("Publication changed after this version was tagged; prepare a new version")
     if decision["content_sha256"] != shipped_digest(head_files):
         raise ValueError("Shipped content differs from the agent-reviewed decision; review the full diff again")
+    if ("publication_sha256" in decision or result["packaging_changes"]
+            or result["publication_changes"]):
+        if decision.get("publication_sha256") != publication_digest(head_files):
+            raise ValueError("Publication differs from the agent-reviewed decision; review the full diff again")
     return decision
 
 

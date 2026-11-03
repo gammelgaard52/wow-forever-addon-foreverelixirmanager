@@ -111,12 +111,18 @@ There is no additional approval checkbox. Every manual run on main requests a re
 release of the selected type, after all validation passes. Use PR checks for testing;
 do not start this workflow merely to validate a build.
 
-The agent determines patch/minor/major from the shipped changes, prepares the
+The agent determines patch/minor/major from addon and external publication changes, prepares the
 version and release notes, and records the decision in release-plan.json. The owner
 does not enter a version or classify code changes. The workflow automatically uses
 the prepared version. A blocking release-policy check verifies the exact increment,
-source digest, baseline tag and immutable released content. Any later shipped
-change invalidates the recorded decision until the agent reviews it again.
+source and publication digests, baseline tag and immutable released content.
+Any later addon, packaging or publication change invalidates the recorded decision
+until the agent reviews it again. Once tagged, such changes require a new version.
+
+Do not create the tag or GitHub release first: this workflow creates both from
+the prepared TOC version. A manually created tag does not update the TOC or release
+plan. GitHub's **Generate release notes** uses its own PR-based format; it does not
+run this project's changelog renderer or submit an addon package to CurseForge.
 
 | Selected type | GitHub | CurseForge |
 |---|---|---|
@@ -173,14 +179,25 @@ intentional: a timeout after the CurseForge POST may hide an accepted upload.
 
 ## Agent release preparation
 
-The agent reviews the entire shipped diff against the latest release tag and
+The agent reviews the entire addon and publication diff against the latest release tag and
 selects patch for compatible fixes, minor for compatible features or major for
-breaking contracts, including before 1.0. See [AGENTS.md](../AGENTS.md). Management
-changes preserve the addon version and existing release decision. Packaging changes
+breaking contracts, including before 1.0. See [AGENTS.md](../AGENTS.md). Changes visible
+outside GitHub must be documented in CHANGELOG.md and included in the version:
+addon behavior, packages, and CurseForge administration/project-page names, notes,
+links and metadata. Compatible presentation corrections are patch changes even
+when the installed Lua is identical. GitHub-only changes, such as workflow updates,
+tests and repository documentation, preserve the addon version. Packaging changes
 require comparing ZIP contents; published assets must never be replaced.
 
-An explicit owner request can authorize preparing a version-only patch, as for
-0.5.1's release-name correction. Record the request in `version_only_approval`
+Release-name and release-note corrections now qualify directly as publication
+changes; they do not need a version-only exception. The planner tracks packaging
+and publication scripts and CHANGELOG.md, excluding workflows. The agent must
+also review any external project-page/admin changes not represented by those paths.
+The release plan records `content_sha256` for installed content and
+`publication_sha256` for publication inputs, including the completed changelog.
+
+An explicit owner request can still authorize a version-only patch without addon
+or publication changes. Record the request in `version_only_approval`
 in the release plan alongside the exact baseline/version and unchanged content
 digest, and prepare the TOC and notes manually. The policy rejects this exception
 for changed addon content or a minor/major increment; the preparation helper never
