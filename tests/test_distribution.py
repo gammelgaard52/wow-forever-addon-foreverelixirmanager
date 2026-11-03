@@ -21,6 +21,28 @@ validation = module("validate")
 
 
 class DistributionTests(unittest.TestCase):
+    def test_connection_check_only_reads_catalog(self):
+        rows = [{"id": 123, "name": "1.60.1", "gameVersionTypeID": 456}]
+        with patch.dict(os.environ, {"CURSEFORGE_API_TOKEN": "test-only"}), patch.object(cf, "api", return_value=rows) as api, patch("builtins.print"):
+            cf.main(["--check-version", "1.60.1"])
+            api.assert_called_once_with("/game/versions", "test-only")
+        self.assertEqual(cf.check_version(rows, "1.60.1"), {
+            "CURSEFORGE_GAME_VERSION_ID": 123, "CURSEFORGE_GAME_VERSION_NAME": "1.60.1",
+            "CURSEFORGE_GAME_VERSION_TYPE_ID": 456,
+        })
+
+    def test_connection_check_rejects_missing_ambiguous_or_invalid_version(self):
+        row = {"id": 123, "name": "1.60.1", "gameVersionTypeID": 456}
+        for rows in [[], [row, row], ["bad"], [{**row, "id": -1}], [{**row, "gameVersionTypeID": None}]]:
+            with self.assertRaises(ValueError):
+                cf.check_version(rows, "1.60.1")
+
+    def test_connection_check_cannot_be_combined_with_upload(self):
+        with patch.object(cf, "api") as api, patch("sys.stderr"):
+            with self.assertRaises(SystemExit):
+                cf.main(["--check-version", "1.60.1", "--approve-upload"])
+            api.assert_not_called()
+
     def test_invalid_or_mismatched_tag_is_rejected_before_packaging(self):
         for tag in ["v99.0.0", "v0.3.0-extra", "v00.3.0", "main", "v0.3.0/path"]:
             with patch("sys.argv", ["validate.py", "--tag", tag]), patch.object(validation, "package") as package:

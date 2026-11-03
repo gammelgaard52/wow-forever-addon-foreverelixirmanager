@@ -1,8 +1,9 @@
 # CurseForge publication setup
 
-Status: **prepared, not executed**. No credentials, project ID or Forever version
-IDs were supplied, and no upload was attempted. The first upload still needs
-explicit approval and completed live validation.
+Project: **1780660**, ForeverElixirManager. The owner reports that 0.3.0 was
+uploaded manually and approved. Do not upload another copy of 0.3.0.
+The repository secret CURSEFORGE_API_TOKEN and project-ID variable are configured.
+Automated upload has not been tested; future uploads still require explicit approval.
 
 ## Supported API
 
@@ -17,8 +18,12 @@ The script sends the ZIP as `file` and JSON as `metadata`. It chooses `alpha`,
 `beta` or `release`, includes the changelog, and requests manual release after
 moderation. It rejects redirects rather than forwarding credentials elsewhere.
 A successful response is an uploaded file ID, not proof of approval or visibility.
-The authenticated endpoint and the actual Forever catalog entries remain
-**NOT VERIFIED** until credentials are configured and a read-only query succeeds.
+**PASS, 3 November 2026:** the authenticated catalog check succeeded in
+[GitHub Actions run 41695903589](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41695903589).
+The unique 1.60.1 entry (matching the owner's manually uploaded Forever file)
+returned version ID 17053 and type ID 88568. The upload job was skipped.
+Project-specific upload permission and automated file submission remain
+**NOT VERIFIED**; catalog access does not prove either.
 
 ## Configure GitHub Actions
 
@@ -27,14 +32,22 @@ In this repository's **Settings → Secrets and variables → Actions**, configu
 | Kind | Name | Value |
 |---|---|---|
 | Secret | `CURSEFORGE_API_TOKEN` | Author token generated at [CurseForge API Tokens](https://authors.curseforge.com/account/api-tokens), with access to this project |
-| Variable | `CURSEFORGE_PROJECT_ID` | Numeric ID from the existing CurseForge project dashboard |
-| Variable | `CURSEFORGE_GAME_VERSION_ID` | Numeric ID of the supported Forever client version from the upload API catalog |
-| Variable | `CURSEFORGE_GAME_VERSION_NAME` | Exact `name` returned for that entry |
-| Variable | `CURSEFORGE_GAME_VERSION_TYPE_ID` | Exact `gameVersionTypeID` for that Forever entry |
+| Variable | `CURSEFORGE_PROJECT_ID` | `1780660` |
+| Variable | `CURSEFORGE_GAME_VERSION_ID` | `17053` |
+| Variable | `CURSEFORGE_GAME_VERSION_NAME` | `1.60.1` |
+| Variable | `CURSEFORGE_GAME_VERSION_TYPE_ID` | `88568` |
 
 These environment-variable names are local workflow conventions. The actual API
 authentication field is **X-Api-Token**. Do not paste the token in source files,
 issues, PR comments or chat. No repository security settings are changed by this PR.
+
+To test the stored token without uploading, run **Check or upload to CurseForge**
+in GitHub Actions with mode **check** and game_version **1.60.1** (the version
+shown on the manually uploaded file). Leave upload authorization unchecked.
+This mode performs only an authenticated catalog GET and prints the matching
+version variables. It rejects missing/ambiguous version names. It cannot verify
+permission to upload to the project, moderation or actual addon compatibility.
+The check also works on a reviewed feature branch; uploads remain main-only.
 
 A maintainer can securely provide the token in their local environment and run:
 
@@ -56,7 +69,7 @@ establish that this tuple denotes Forever. Missing catalog support blocks upload
    version and release notes together before creating that tag. A tag push runs
    validation and publishes the installable GitHub release archive.
 3. Obtain separate approval to upload that version to CurseForge. In Actions,
-   select **Upload approved release to CurseForge**, run from **main**, supply
+   select **Check or upload to CurseForge**, run from **main**, select **upload**, supply
    the existing release tag and release type, and tick the upload-authorization
    input. An ordinary push, PR, or GitHub release event never runs this workflow.
 4. The workflow requires a tag reachable from main and a non-draft GitHub release.
@@ -79,5 +92,6 @@ bypass that review. Alpha/beta/release classification and review approval are
 separate. The guide also says a project needs an approved Release file before it
 syncs to the CurseForge app; do not label an untested build Release just for visibility.
 
-**BLOCKED:** actual publication needs the configured token, project/version values,
-completed in-game checks and explicit approval. Nothing has been uploaded here.
+The token and all four repository variables are configured. Future automated
+publication still needs a validated version and explicit approval. Only the
+read-only connection check has run; no file has been uploaded by this integration.

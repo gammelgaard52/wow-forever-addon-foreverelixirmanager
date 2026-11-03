@@ -34,6 +34,20 @@ def positive_id(value):
     return int(value)
 
 
+def check_version(versions, name):
+    if not name or not isinstance(versions, list) or any(not isinstance(row, dict) for row in versions):
+        raise ValueError("Expected a version name and a game-version catalog")
+    matching = [row for row in versions if row.get("name") == name]
+    if len(matching) != 1:
+        raise ValueError("Game version name is missing or ambiguous in the live catalog")
+    row = matching[0]
+    return {
+        "CURSEFORGE_GAME_VERSION_ID": positive_id(row.get("id", "")),
+        "CURSEFORGE_GAME_VERSION_NAME": name,
+        "CURSEFORGE_GAME_VERSION_TYPE_ID": positive_id(row.get("gameVersionTypeID", "")),
+    }
+
+
 def upload_metadata(versions, version_id, version_name, type_id, tag, release_type, changelog):
     version_id, type_id = positive_id(version_id), positive_id(type_id)
     if not isinstance(versions, list) or any(not isinstance(row, dict) for row in versions):
@@ -90,18 +104,25 @@ def multipart(metadata, archive):
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--list-versions", action="store_true")
-    parser.add_argument("--approve-upload", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--list-versions", action="store_true")
+    mode.add_argument("--check-version", metavar="NAME")
+    mode.add_argument("--approve-upload", action="store_true")
     parser.add_argument("--tag")
     parser.add_argument("--archive", type=Path)
     parser.add_argument("--changelog", type=Path)
     parser.add_argument("--release-type", choices=("alpha", "beta", "release"), default="alpha")
     args = parser.parse_args(argv)
-    if not args.list_versions and not args.approve_upload:
+    if not args.list_versions and args.check_version is None and not args.approve_upload:
         raise ValueError("Upload requires explicit --approve-upload authorization")
     token = os.environ.get("CURSEFORGE_API_TOKEN")
     if not token:
         raise ValueError("Configure the CURSEFORGE_API_TOKEN Actions secret")
+    if args.check_version is not None:
+        result = check_version(api("/game/versions", token), args.check_version)
+        print("PASS: authenticated catalog GET; no file uploaded. Project upload permission is not tested.")
+        print(json.dumps(result, indent=2))
+        return
     if args.list_versions:
         print(json.dumps(api("/game/versions", token), indent=2))
         return

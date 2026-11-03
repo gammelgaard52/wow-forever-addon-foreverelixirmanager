@@ -1,11 +1,22 @@
-name: Upload approved release to CurseForge
+name: Check or upload to CurseForge
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: Check connection/version catalog or upload an approved release
+        type: choice
+        options: [check, upload]
+        default: check
+        required: true
+      game_version:
+        description: Exact CurseForge game version name to check (no upload)
+        type: string
+        default: '1.60.1'
+        required: false
       tag:
         description: Existing approved GitHub release tag (vX.Y.Z)
         type: string
-        required: true
+        required: false
       release_type:
         description: CurseForge release type
         type: choice
@@ -23,8 +34,20 @@ concurrency:
   group: curseforge-${{ inputs.tag }}
   cancel-in-progress: false
 jobs:
+  check:
+    if: inputs.mode == 'check'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read authenticated game-version catalog (GET only)
+        env:
+          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          GAME_VERSION: ${{ inputs.game_version }}
+        run: python3 scripts/curseforge.py --check-version "$GAME_VERSION"
   upload:
-    if: github.ref == 'refs/heads/main' && inputs.approve_upload
+    if: github.ref == 'refs/heads/main' && inputs.mode == 'upload' && inputs.approve_upload
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
