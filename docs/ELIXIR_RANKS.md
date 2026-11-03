@@ -1,7 +1,7 @@
 # Elixir rank evidence and selection
 
-Issue #19 adds rank selection to the six existing groups. This is an experimental
-candidate, not a claim of live-client compatibility. Reviewed 3 November 2026.
+Rank selection covers six effect groups. The source observations below were
+reviewed on 3 November 2026; live-client compatibility remains unverified.
 
 ## Selection contract
 
@@ -82,7 +82,3 @@ The Lua harness uses synthetic bag, level and aura data to test all six groups,
 fallback, upgrades, equal-strength suppression, settings persistence, cache refresh,
 group priority and combat suspension. Passing these tests validates that policy's
 logic only. Keep the live checklist in [VALIDATION.md](VALIDATION.md).
-
-Local candidate checks: 28 Lua scenarios and 29 Python tests PASS. The 0.5.0 ZIP
-has only the addon Lua file, TOC and LICENSE in one ForeverElixirManager/ folder;
-TOC remains interface 16001. No tag, release or CurseForge upload was created.

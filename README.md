@@ -82,8 +82,8 @@ release, and uploads to CurseForge for automatic publication after moderation.
 Alpha/Beta are GitHub prereleases; Release is stable. See
 [publishing setup and recovery](docs/CURSEFORGE.md#release-a-prepared-version).
 Changes to CI, tests, scripts, documentation or repository management do not bump
-the addon version or publish a release. See the
-[version policy and issue priorities](docs/IMPROVEMENTS.md).
+the addon version or publish a release. The [repository instructions](AGENTS.md)
+define the version policy.
 
 PR checks include a blocking **release-policy** check against the agent's
 `release-plan.json` decision, plus an advisory **Addon version assessment** in the Actions
@@ -94,18 +94,18 @@ Use `--bump minor` or `--bump major` when reviewing features or breaking changes
 
 For reviewed release preparation, `scripts/prepare_release.py` can update the TOC
 and prepend supplied release notes and record the semantic decision on a clean
-branch. It compares against the
-latest release tag, defaults to a preview, and never commits, tags or uploads.
+branch. It compares against the latest release tag, defaults to a preview, and
+never commits, tags or uploads.
 Management-only changes do not write a new version. See the
-[preparation commands](docs/IMPROVEMENTS.md#reviewed-release-preparation).
+[preparation commands](docs/CURSEFORGE.md#agent-release-preparation).
 
-An optional [wowlua experiment](docs/VALIDATION.md#wowlua-experiment-issue-4)
+An optional [wowlua test suite](docs/VALIDATION.md#optional-wowlua-tests)
 checks startup, commands, bag refresh and combat transitions against Blizzard UI.
 It is separate from required CI and cannot establish live-client compatibility.
 
 ## Forever version monitoring
 
-After merge to main, **Monitor Forever versions** checks CurseForge's configured
+**Monitor Forever versions** checks CurseForge's configured
 Forever category every six hours. A newer, untracked game version triggers tests,
 a rebuild of the existing addon version and a compatibility-review issue with the
 result. The ZIP is a temporary Actions artifact, not a release. Addon version,

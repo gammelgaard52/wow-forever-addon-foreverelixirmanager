@@ -1,51 +1,14 @@
 # CurseForge publication setup
 
-Project: **1780660**, ForeverElixirManager. The owner reports that 0.3.0 was
-uploaded manually and approved. Do not upload another copy of 0.3.0.
-The repository secret CURSEFORGE_API_TOKEN and project-ID variable are configured.
-The first automated upload succeeded on 3 November 2026: addon 0.4.0, Alpha,
-target WoW 1.60.1, CurseForge file **9426340**. Future uploads still require explicit approval.
+Project: [ForeverElixirManager](https://www.curseforge.com/wow/addons/foreverelixirmanager),
+ID **1780660**. Tags and ZIP filenames use the addon's own version (`vX.Y.Z` and
+`ForeverElixirManager-X.Y.Z.zip`). WoW versions are compatibility metadata.
 
-- [GitHub prerelease v0.4.0](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/releases/tag/v0.4.0)
-- [Successful upload run 41703210547](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41703210547)
-- [CurseForge file 9426340](https://www.curseforge.com/wow/addons/foreverelixirmanager/files/9426340)
-
-The upload requests manual release after moderation. API acceptance is confirmed;
-moderator approval, public availability and a download from CurseForge are not yet
-verified. Do not submit this version again. The published GitHub ZIP was downloaded,
-checked against the tagged source and allowlist, and compared byte-for-byte by the
-upload workflow. Its SHA-256 is
-`e91bbe184d72bb96efa5d587155050405422248e8a7c0cffc83b9c685fdd2d71`.
-
-## Supported API
-
-The filename and GitHub tag use the addon's own version. WoW versions are
-compatibility metadata, not a replacement for addon versioning. The owner
-withdrew the WoW-version filename proposal in issue #13 before any release.
-
-| Addon version | ZIP filename | Target WoW version | Interface | Evidence |
-|---|---|---|---|---|
-| 0.3.0 | `ForeverElixirManager-0.3.0.zip` | 1.60.1 | 16001 | Manual upload approved, per owner |
-| 0.4.0 | `ForeverElixirManager-0.4.0.zip` | 1.60.1 | 16001 | Alpha authorized; actual client compatibility NOT VERIFIED |
-
-The official [CurseForge Upload API](https://support.curseforge.com/support/solutions/articles/9000197321-curseforge-upload-api)
-documents author tokens in the `X-Api-Token` header, multipart file submission,
-version catalogs, release types and Markdown changelogs. This is the author upload
-service, not the separate API-key-based client download API. The workflow uses the
-WoW site at `https://wow.curseforge.com/api`, verifies the selected version against
-its live catalog and submits to `/projects/{projectId}/upload-file`.
-
-The script sends the ZIP as `file` and JSON as `metadata`. It chooses `alpha`,
-`beta` or `release`, includes the changelog, and requests manual release after
-moderation. It rejects redirects rather than forwarding credentials elsewhere.
-A successful response is an uploaded file ID, not proof of approval or visibility.
-**PASS, 3 November 2026:** the authenticated catalog check succeeded in
-[GitHub Actions run 41695903589](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41695903589).
-The unique 1.60.1 entry (matching the owner's manually uploaded Forever file)
-returned version ID 17053 and type ID 88568. The upload job was skipped.
-That catalog run alone did not prove project upload permission. The later
-successful file submission recorded above now verifies that permission and the
-automated upload path, but not live addon compatibility or public availability.
+The [CurseForge Upload API](https://support.curseforge.com/support/solutions/articles/9000197321-curseforge-upload-api)
+uses author tokens in `X-Api-Token`, a multipart ZIP and JSON metadata. Workflows
+use `https://wow.curseforge.com/api`, validate the live version catalog and submit
+to `/projects/{projectId}/upload-file`. Redirects are rejected to protect credentials.
+An uploaded file ID confirms submission, not moderation or public availability.
 
 ## Configure GitHub Actions
 
@@ -61,11 +24,11 @@ In this repository's **Settings → Secrets and variables → Actions**, configu
 
 These environment-variable names are local workflow conventions. The actual API
 authentication field is **X-Api-Token**. Do not paste the token in source files,
-issues, PR comments or chat. No repository security settings are changed by this PR.
+issues, PR comments or chat.
 
 To test the stored token without uploading, run **Check or upload to CurseForge**
 in GitHub Actions with mode **check** and game_version **1.60.1** (the version
-shown on the manually uploaded file). Leave upload authorization unchecked.
+configured for this project). Leave upload authorization unchecked.
 This mode performs only an authenticated catalog GET and prints the matching
 version variables. It rejects missing/ambiguous version names. It cannot verify
 permission to upload to the project, moderation or actual addon compatibility.
@@ -86,11 +49,11 @@ establish that this tuple denotes Forever. Missing catalog support blocks upload
 
 ## Forever version monitor
 
-`.github/workflows/forever-monitor.yml` implements issue #3 as scheduled detection,
+`.github/workflows/forever-monitor.yml` provides scheduled detection,
 validation and review, independently of addon releases. It uses the existing
 token and version variables above; no additional credentials are needed.
 
-- Schedule: 00:23, 06:23, 12:23 and 18:23 UTC on main, after the workflow is merged.
+- Schedule: 00:23, 06:23, 12:23 and 18:23 UTC on main.
   GitHub schedules can be delayed and can be disabled after repository inactivity;
   this is periodic checking, not an immediate Blizzard release webhook.
 - Source: authenticated GET of the CurseForge game-version catalog. The configured
@@ -149,8 +112,6 @@ does not enter a version or classify code changes. The workflow automatically us
 the prepared version. A blocking release-policy check verifies the exact increment,
 source digest, baseline tag and immutable released content. Any later shipped
 change invalidates the recorded decision until the agent reviews it again.
-The current decision is 0.4.0 → 0.5.0, a minor increment for the rank-selection
-feature; the management automation does not increment it again.
 
 | Selected type | GitHub | CurseForge |
 |---|---|---|
@@ -195,49 +156,52 @@ intentional: a timeout after the CurseForge POST may hide an accepted upload.
   files and the run logs first. If a file exists, use that file. Do not rerun the
   POST or delete/recreate the GitHub tag to bypass the duplicate guard.
 
-## Legacy separate publication procedure
+## Legacy workflows
 
-The older workflows remain available for connection checks, artifact-only builds
-and reviewed recovery. Their behavior is different from the combined workflow:
-the old tag workflow marks pre-1.0 as prereleases, and the old CurseForge workflow
-still requests manual publication. Use the combined workflow for new releases.
+Use the combined workflow for new releases. The older workflows support checks,
+artifact-only builds and reviewed recovery:
 
-1. Finish the live-client checklist, review the PR, and approve merging separately.
-   Exception: the owner explicitly authorized 0.4.0 as an unverified Alpha on
-   3 November 2026 because live testing is unavailable. Keep that limitation and
-   the unresolved emulator probes in its release notes; do not claim compatibility.
-2. Obtain explicit approval for the specific GitHub release tag. Ensure the TOC
-   version and release notes agree before creating that tag. Keep an already
-   prepared, unreleased addon version when only management files changed; those
-   changes do not need a version bump. A tag push runs
-   validation and publishes the installable GitHub release archive.
-   Pre-1.0 tags create GitHub prereleases and are not marked latest/stable.
-3. Obtain separate approval to upload that version to CurseForge. In Actions,
-   select **Check or upload to CurseForge**, run from **main**, select **upload**, supply
-   the existing release tag and release type, and tick the upload-authorization
-   input. An ordinary push, PR, or GitHub release event never runs this workflow.
-4. The workflow requires a tag reachable from main and a non-draft GitHub release.
-   It validates tagged source, reconstructs the deterministic package, and compares
-   it byte-for-byte with the GitHub release asset before exposing the token to the
-   upload step. Legacy tags without these scripts/packaging cannot use this path.
-5. Review the returned file ID in the project dashboard. The workflow requests
-   manual release after moderation; make it public only with publication approval.
+- **Release WoW addon** builds an artifact when manually run. An approved tag push
+  creates a GitHub release; this legacy path classifies pre-1.0 as prereleases.
+- **Check or upload to CurseForge** provides read-only catalog checks. Recovery
+  uploads require main, upload mode, an existing approved release tag, type and
+  upload approval. The tag must be reachable from main and the release non-draft.
+  Tagged source is validated and its rebuilt ZIP must match the GitHub asset.
+  This legacy path requests manual CurseForge publication after moderation.
 
-Do not re-run a timed-out or uncertain upload without checking the project files:
-the API does not document an idempotency key, and another POST can duplicate a file.
-Publication workflows serialize all runs, and the script does not retry POSTs.
-In the legacy upload-only workflow, the token is scoped to the upload step and
-GitHub permissions are read-only.
+## Agent release preparation
 
-## Moderation and first submission
+The agent reviews the entire shipped diff against the latest release tag and
+selects patch for compatible fixes, minor for compatible features or major for
+breaking contracts, including before 1.0. See [AGENTS.md](../AGENTS.md). Management
+changes preserve the addon version and existing release decision. Packaging changes
+require comparing ZIP contents; published assets must never be replaced.
+
+On a clean development branch, fetch tags and use the latest release as the base.
+For example, when the latest release is v0.4.0 and the change is a compatible feature:
+
+```text
+git fetch origin --tags
+python scripts/prepare_release.py --base v0.4.0 --bump minor
+python scripts/prepare_release.py --base v0.4.0 --bump minor --notes-file /path/to/notes.txt --reason "Add compatible functionality" --apply
+```
+
+Keep the notes input outside Git or under ignored `dist/`. The command previews by
+default; applying writes the TOC, CHANGELOG and release-plan.json without committing,
+tagging or publishing. Review and commit those files, then run:
+
+```text
+python scripts/release_policy.py
+python scripts/validate.py
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+The policy checks the exact version increment, baseline, source digest and tagged
+content. The agent remains responsible for interpreting behavioral compatibility.
+
+## Moderation and app visibility
 
 CurseForge's [project submission guide](https://support.curseforge.com/support/solutions/articles/9000197241-creating-and-submitting-a-project)
-says the first file submits the project for moderator review. Automation does not
-bypass that review. Alpha/beta/release classification and review approval are
-separate. The guide also says a project needs an approved Release file before it
-syncs to the CurseForge app; do not label an untested build Release just for visibility.
-
-The token and all four repository variables are configured. The first authorized
-Alpha submission is complete. Future publication still needs an approved version;
-the owner must review file 9426340 in the dashboard and publish it after moderation
-to make this manually held upload public.
+describes moderator review and the requirement for an approved Release file before
+a project syncs to the app. Upload success and Alpha/Beta classification do not
+establish app visibility or live-client compatibility.

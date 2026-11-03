@@ -14,7 +14,7 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
   or merging this automation does not authorize executing a release. Its GITHUB_TOKEN
   tag does not trigger the legacy tag workflow, so it publishes within the same run.
 - Addon versions describe changes to the installed addon. Management-only changes (workflows, scripts, tests, documentation, agent instructions, issue templates and unshipped artwork) must not bump the TOC version, add an addon release-note section, create a release tag or publish a new addon package.
-- CI may rebuild and validate the existing version without releasing it. Future version automation must compare shipped content and require an explicitly reviewed release decision; commit types or merges alone must not trigger a version bump. See `docs/IMPROVEMENTS.md` for the version policy and issue priorities.
+- CI may rebuild and validate the existing version without releasing it. Version automation must compare shipped content and require an agent-reviewed release decision; commit types or merges alone must not trigger a version bump. Packaging changes require comparing actual ZIPs; never replace a published asset with different bytes.
 - The agent owns semantic classification: inspect the complete shipped diff since
   the previous release and choose patch for compatible fixes, minor for compatible
   features, or major for breaking behavior/settings/command contracts. Record the
@@ -22,6 +22,8 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
   next version and notes, bind the decision to the shipped content digest, and run
   release_policy.py. Do not ask the owner to classify
   code changes. Alpha/Beta/Release is their distribution choice, independent of SemVer.
+- Apply the same patch/minor/major contract before 1.0. Preserve an already prepared
+  version when its increment still covers all unreleased changes.
 
 ## Before changes
 1. Read this file, README, TOC, Lua source, and relevant workflow files.
@@ -48,6 +50,10 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
   and configured credentials. Never treat a merge or monitor rebuild as approval.
 
 ## Documentation
+- Keep only maintained source, assets, tests, configuration and operational documentation
+  in Git. Keep issue priorities and progress in GitHub; do not add repository work logs,
+  copied issue reports or duplicate project descriptions. Use ignored `dist/` or a
+  system temporary directory for downloads, build output and scratch files.
 - Keep installation, macro setup, commands, limitations and rollback instructions in README.
 - Describe API assumptions separately from confirmed client behavior.
 - Include release notes for user-facing changes; keep core addon lightweight.
