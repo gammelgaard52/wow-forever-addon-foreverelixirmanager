@@ -1,8 +1,8 @@
 # Issue priorities and version policy
 
 Reviewed on 3 November 2026, including merged PRs #11 and #12. Each issue was
-checked against existing code before implementation. Issues #5 and #3 are now
-closed with evidence; #4, #7 and #8 track the remaining work below.
+checked against existing code before implementation. Issues #5, #3 and #8 are now
+closed with evidence; #4 and #7 track the remaining testing/version-preparation work.
 
 ## Prioritized issues
 
@@ -35,8 +35,9 @@ Neither a new test framework nor a successful upload proves these work.
   installed content, preserving versions for management-only changes. See below.
 - #8: the upload path and credentials already exist. On 3 November the owner
   explicitly authorized releasing 0.4.0 as Alpha without live-client testing,
-  because they cannot test the game yet. Record the real upload result in #8;
-  the exception authorizes experimental distribution, not a compatibility claim.
+  because they cannot test the game yet. The upload succeeded (file 9426340) and
+  #8 is closed with run/ZIP evidence. Moderation and manual publication remain
+  external follow-up; this is not a client compatibility claim.
 
 ## Test framework evidence for #4
 
@@ -98,9 +99,10 @@ human review and explicit release approval.
 ## First automated CurseForge upload
 
 The token/catalog check passed and the owner reports manual 0.3.0 approval.
-On this review date, GitHub has no release objects and no remote tags. The upload
-workflow requires both an approved tag and its published GitHub ZIP, so it cannot
-yet submit 0.4.0. No new version is needed for the management work in this review.
+At the initial review there were no GitHub releases or remote tags. The owner
+subsequently approved 0.4.0 as Alpha: tag/prerelease `v0.4.0` now exists and the
+automated upload returned CurseForge file 9426340. See [the recorded result](CURSEFORGE.md).
+No additional addon-version bump was made for management work.
 
 Recommended order:
 

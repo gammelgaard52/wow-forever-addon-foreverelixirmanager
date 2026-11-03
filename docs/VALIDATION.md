@@ -114,7 +114,10 @@ Update, 3 November 2026: local validation passes 18 mocked Lua scenarios and
 12 Python distribution tests. The authenticated CurseForge catalog check is now
 PASS; see [the recorded run and configuration](CURSEFORGE.md). The older table
 above records the 2 November state. Project upload permission, actual automated
-upload and all live-client results remain NOT VERIFIED.
+upload and all live-client results were still NOT VERIFIED at that point.
+Later on 3 November, the approved Alpha upload returned file 9426340; see
+[the upload evidence](CURSEFORGE.md). This verifies submission only. All live-client
+results remain NOT VERIFIED and the optional emulator results below are unchanged.
 
 ## wowlua experiment (issue #4)
 

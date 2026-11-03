@@ -3,7 +3,19 @@
 Project: **1780660**, ForeverElixirManager. The owner reports that 0.3.0 was
 uploaded manually and approved. Do not upload another copy of 0.3.0.
 The repository secret CURSEFORGE_API_TOKEN and project-ID variable are configured.
-Automated upload has not been tested; future uploads still require explicit approval.
+The first automated upload succeeded on 3 November 2026: addon 0.4.0, Alpha,
+target WoW 1.60.1, CurseForge file **9426340**. Future uploads still require explicit approval.
+
+- [GitHub prerelease v0.4.0](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/releases/tag/v0.4.0)
+- [Successful upload run 41703210547](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41703210547)
+- [CurseForge file 9426340](https://www.curseforge.com/wow/addons/foreverelixirmanager/files/9426340)
+
+The upload requests manual release after moderation. API acceptance is confirmed;
+moderator approval, public availability and a download from CurseForge are not yet
+verified. Do not submit this version again. The published GitHub ZIP was downloaded,
+checked against the tagged source and allowlist, and compared byte-for-byte by the
+upload workflow. Its SHA-256 is
+`e91bbe184d72bb96efa5d587155050405422248e8a7c0cffc83b9c685fdd2d71`.
 
 ## Supported API
 
@@ -31,8 +43,9 @@ A successful response is an uploaded file ID, not proof of approval or visibilit
 [GitHub Actions run 41695903589](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41695903589).
 The unique 1.60.1 entry (matching the owner's manually uploaded Forever file)
 returned version ID 17053 and type ID 88568. The upload job was skipped.
-Project-specific upload permission and automated file submission remain
-**NOT VERIFIED**; catalog access does not prove either.
+That catalog run alone did not prove project upload permission. The later
+successful file submission recorded above now verifies that permission and the
+automated upload path, but not live addon compatibility or public availability.
 
 ## Configure GitHub Actions
 
@@ -157,6 +170,7 @@ bypass that review. Alpha/beta/release classification and review approval are
 separate. The guide also says a project needs an approved Release file before it
 syncs to the CurseForge app; do not label an untested build Release just for visibility.
 
-The token and all four repository variables are configured. Future automated
-publication still needs a validated version and explicit approval. Only the
-read-only connection check has run; no file has been uploaded by this integration.
+The token and all four repository variables are configured. The first authorized
+Alpha submission is complete. Future publication still needs an approved version;
+the owner must review file 9426340 in the dashboard and publish it after moderation
+to make this manually held upload public.
