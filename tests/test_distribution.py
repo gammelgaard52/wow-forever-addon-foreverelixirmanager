@@ -25,7 +25,7 @@ class DistributionTests(unittest.TestCase):
         changelog = "# Release notes\n\n## 0.6.0\n\nFuture\n\n## 0.5.0\n\n- Current fix\n\n### Details\nKeep this.\n\n## 0.4.0\n\nOlder\n"
         for source in (changelog, changelog.replace("\n", "\r\n")):
             notes = cf.release_notes(source, "v0.5.0", "v0.4.0")
-            self.assertTrue(notes.startswith(f"## [0.5.0]({cf.REPOSITORY_URL}/releases/tag/v0.5.0)"))
+            self.assertTrue(notes.startswith(f"## [0.5.0]({cf.REPOSITORY_URL}/tree/v0.5.0)"))
             self.assertIn(f"[Full Changelog]({cf.REPOSITORY_URL}/compare/v0.4.0...v0.5.0)", notes)
             self.assertNotIn("Previous Releases", notes)
             self.assertIn("- Current fix", notes)
@@ -159,7 +159,7 @@ class DistributionTests(unittest.TestCase):
             self.assertEqual(api.call_args.args[:2], ("/projects/42/upload-file", "test-only"))
             body = api.call_args.args[2]
             self.assertIn(b"[Full Changelog]", body)
-            self.assertIn(f"/releases/tag/v{validation.metadata()}".encode(), body)
+            self.assertIn(f"/tree/v{validation.metadata()}".encode(), body)
             self.assertNotIn(b"[Previous Releases]", body)
             self.assertNotIn(b"## 0.4.0", body)
 

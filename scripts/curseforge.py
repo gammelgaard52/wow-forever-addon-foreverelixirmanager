@@ -16,7 +16,7 @@ TAG_RE = r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
 
 
 def release_notes(changelog, tag, previous_tag=None):
-    """Render one version's notes with links to its release and full changelog."""
+    """Render one version's notes with links to its source and full changelog."""
     if not re.fullmatch(TAG_RE, tag):
         raise ValueError("Tag must be vX.Y.Z")
     if previous_tag is not None:
@@ -31,7 +31,7 @@ def release_notes(changelog, tag, previous_tag=None):
         raise ValueError("Changelog must contain exactly one nonempty section for " + tag)
     full = (f"{REPOSITORY_URL}/compare/{previous_tag}...{tag}" if previous_tag
             else f"{REPOSITORY_URL}/blob/{tag}/CHANGELOG.md")
-    return (f"## [{tag[1:]}]({REPOSITORY_URL}/releases/tag/{tag})\n\n"
+    return (f"## [{tag[1:]}]({REPOSITORY_URL}/tree/{tag})\n\n"
             f"[Full Changelog]({full})\n\n"
             + sections[0].strip())
 

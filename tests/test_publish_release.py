@@ -209,7 +209,7 @@ class ReleasePlanTests(unittest.TestCase):
                 self.assertTrue(result["notes"].endswith("New notes"))
                 self.assertNotIn("Old", result["notes"])
                 self.assertIn("[0.5.0]", result["notes"])
-                self.assertIn("/releases/tag/v0.5.0", result["notes"])
+                self.assertIn("/tree/v0.5.0", result["notes"])
                 self.assertIn("/compare/v0.4.0...v0.5.0", result["notes"])
                 self.assertNotIn("Previous Releases", result["notes"])
                 for version in ("v0.5.0", "0.6.0", "0.5.0;echo", "00.5.0"):
