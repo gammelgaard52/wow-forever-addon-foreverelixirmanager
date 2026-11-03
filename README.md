@@ -76,7 +76,7 @@ See [release notes](CHANGELOG.md), [validation](docs/VALIDATION.md) and
 it cannot verify actual secure clicks or client behavior.
 
 To release a prepared version, run **Release addon (Alpha, Beta or Release)**
-manually on `main`, select the type and tick the publication approval. The workflow
+manually on `main`, select the type and click **Run workflow** to approve publication. The workflow
 uses the version prepared by the agent, validates, creates the tag and GitHub
 release, and uploads to CurseForge for automatic publication after moderation.
 Alpha/Beta are GitHub prereleases; Release is stable. See

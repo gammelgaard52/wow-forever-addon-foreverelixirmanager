@@ -11,7 +11,8 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
   publish. Do not create a release tag without approval.
 - The manual `publish.yml` workflow combines tag creation, GitHub publication and
   CurseForge submission only after the owner selects Alpha/Beta/Release and
-  explicitly approves the run. CurseForge then publishes after moderation. Building
+  clicks **Run workflow** on main. That manual dispatch is publication approval;
+  there is no additional approval checkbox. CurseForge publishes after moderation. Building
   or merging this automation does not authorize executing a release.
 - Addon versions describe changes to the installed addon. Management-only changes (workflows, scripts, tests, documentation, agent instructions, issue templates and unshipped artwork) must not bump the TOC version, add an addon release-note section, create a release tag or publish a new addon package.
 - CI may rebuild and validate the existing version without releasing it. Version automation must compare shipped content and require an agent-reviewed release decision; commit types or merges alone must not trigger a version bump. Packaging changes require comparing actual ZIPs; never replace a published asset with different bytes.

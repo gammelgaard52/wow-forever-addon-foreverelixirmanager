@@ -3,19 +3,14 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: Release type on GitHub and CurseForge
+        description: Publish to GitHub and CurseForge as
         type: choice
         options: [alpha, beta, release]
         default: alpha
         required: true
-      approve_release:
-        description: Publish this version on GitHub and automatically on CurseForge after moderation
-        type: boolean
-        default: false
-        required: true
 permissions:
   contents: read
-# Serialize approved release runs to prevent concurrent publication.
+# Running this manual workflow approves publication of the selected release type.
 concurrency:
   group: addon-publication
   cancel-in-progress: false
@@ -25,13 +20,11 @@ jobs:
     outputs:
       version: ${{ steps.plan.outputs.version }}
     steps:
-      - name: Require an approved manual run on main
-        env:
-          APPROVED: ${{ inputs.approve_release }}
+      - name: Require a manual release request on main
         run: |
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
           test "$GITHUB_REF" = refs/heads/main
           test "$GITHUB_REPOSITORY" = gammelgaard52/wow-forever-addon-foreverelixirmanager
-          test "$APPROVED" = true
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -59,7 +52,7 @@ jobs:
           if-no-files-found: error
   publish:
     needs: validate
-    if: github.ref == 'refs/heads/main' && inputs.approve_release
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'gammelgaard52/wow-forever-addon-foreverelixirmanager'
     runs-on: ubuntu-latest
     permissions:
       contents: write
