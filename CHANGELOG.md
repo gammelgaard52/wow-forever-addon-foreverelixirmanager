@@ -1,5 +1,17 @@
 # Release notes
 
+## 0.5.0
+
+Experimental candidate; live Forever compatibility remains NOT VERIFIED.
+
+- Choose the strongest carried, level-eligible elixir within each of the six existing effect groups, falling back when a higher rank is unavailable.
+- Track 24 candidate items with Forever-specific source evidence; runtime client data controls required levels.
+- Avoid replacing a recognized equal or stronger active rank with a weaker one, and offer stronger ranks as manual upgrades.
+- Preserve existing group priority and saved on/off choices. Each choice now covers every rank in that group.
+- Keep manual clicks and combat restrictions. Exact English aura-name assumptions, actual stacking and secure execution still require in-game verification.
+
+Upgrade: existing disabled choices remain disabled for the whole group. Use /fem list to see the group labels; disable a group if /fem buffs misidentifies an active effect.
+
 ## 0.4.0
 
 Experimental Alpha. The owner approved distribution without live-client testing
