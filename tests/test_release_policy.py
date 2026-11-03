@@ -88,6 +88,54 @@ class SemanticPolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "changed shipped content"):
             policy.check_policy()
 
+    def prepare_version_only(self, approval="Owner requests version 0.5.1 for corrected release names"):
+        self.git("tag", "v0.5.0")
+        self.decision("0.5.1", "patch", "Correct release names", base="v0.5.0")
+        path = self.root / "release-plan.json"
+        decision = json.loads(path.read_text())
+        decision["version_only_approval"] = approval
+        path.write_text(json.dumps(decision))
+        self.commit()
+
+    def test_owner_requested_patch_passes_before_and_after_tagging(self):
+        self.prepare_version_only()
+        self.assertEqual(policy.check_policy()["version"], "0.5.1")
+        self.git("tag", "v0.5.1")
+        (self.root / "README.md").write_text("management")
+        self.commit()
+        self.assertEqual(policy.check_policy()["version"], "0.5.1")
+        self.lua.write_text("unreviewed change")
+        self.commit()
+        with self.assertRaisesRegex(ValueError, "unchanged addon content"):
+            policy.check_policy()
+
+    def test_version_only_exception_requires_request_and_patch_increment(self):
+        self.prepare_version_only()
+        path = self.root / "release-plan.json"
+        original = json.loads(path.read_text())
+        for approval in ("", "  ", True, None):
+            with self.subTest(approval=approval):
+                path.write_text(json.dumps({**original, "version_only_approval": approval}))
+                self.commit()
+                with self.assertRaisesRegex(ValueError, "documented request"):
+                    policy.check_policy()
+        for version, bump in (("0.6.0", "minor"), ("1.0.0", "major")):
+            path.write_text(json.dumps({**original, "version": version, "bump": bump}))
+            (self.root / versions.TOC).write_text("## Version: " + version + "\n")
+            self.commit()
+            with self.assertRaisesRegex(ValueError, "patch increment"):
+                policy.check_policy()
+
+    def test_version_only_exception_remains_bound_to_content_digest(self):
+        self.prepare_version_only()
+        path = self.root / "release-plan.json"
+        decision = json.loads(path.read_text())
+        decision["content_sha256"] = "unreviewed"
+        path.write_text(json.dumps(decision))
+        self.commit()
+        with self.assertRaisesRegex(ValueError, "agent-reviewed decision"):
+            policy.check_policy()
+
     def test_tagged_version_allows_management_but_not_addon_changes(self):
         self.git("tag", "v0.5.0")
         (self.root / "README.md").write_text("management")

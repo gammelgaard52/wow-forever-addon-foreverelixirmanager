@@ -76,6 +76,7 @@ class ReleasePipelineTests(unittest.TestCase):
             return [{"id": 123, "name": "1.60.1", "gameVersionTypeID": 456}]
         self.uploads += 1
         self.assertIn(b'"isMarkedForManualRelease": false', body)
+        self.assertIn(b'"displayName": "ForeverElixirManager-v0.5.0"', body)
         self.assertIn(b'"releaseType": "' + self.proposal["release_type"].encode() + b'"', body)
         self.assertIn(self.original, body)
         self.assertIn(json.dumps(self.proposal["notes"]).encode(), body)
@@ -90,6 +91,8 @@ class ReleasePipelineTests(unittest.TestCase):
                 self.assertEqual(publication.publish("0.5.0", channel, True), 99)
                 self.assertEqual(self.uploads, 1)
                 create = next(c for c in self.calls if c[:3] == ("gh", "release", "create"))
+                self.assertEqual(create[create.index("--title") + 1],
+                                 f"ForeverElixirManager-v0.5.0 ({channel.title()})")
                 self.assertEqual("--prerelease" in create, channel != "release")
                 self.assertEqual("--latest" in create, channel == "release")
                 preflight = self.calls.index(("cf", "/game/versions"))

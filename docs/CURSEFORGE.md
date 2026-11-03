@@ -3,6 +3,9 @@
 Project: [ForeverElixirManager](https://www.curseforge.com/wow/addons/foreverelixirmanager),
 ID **1780660**. Tags and ZIP filenames use the addon's own version (`vX.Y.Z` and
 `ForeverElixirManager-X.Y.Z.zip`). WoW versions are compatibility metadata.
+CurseForge display names use `ForeverElixirManager-vX.Y.Z`; GitHub release titles
+use the same name followed by the selected type, for example
+`ForeverElixirManager-v0.5.1 (Alpha)`.
 
 The [CurseForge Upload API](https://support.curseforge.com/support/solutions/articles/9000197321-curseforge-upload-api)
 uses author tokens in `X-Api-Token`, a multipart ZIP and JSON metadata. Workflows
@@ -173,6 +176,13 @@ selects patch for compatible fixes, minor for compatible features or major for
 breaking contracts, including before 1.0. See [AGENTS.md](../AGENTS.md). Management
 changes preserve the addon version and existing release decision. Packaging changes
 require comparing ZIP contents; published assets must never be replaced.
+
+An explicit owner request can authorize preparing a version-only patch, as for
+0.5.1's release-name correction. Record the request in `version_only_approval`
+in the release plan alongside the exact baseline/version and unchanged content
+digest, and prepare the TOC and notes manually. The policy rejects this exception
+for changed addon content or a minor/major increment; the preparation helper never
+infers this approval. Publication still requires the owner's manual release run.
 
 On a clean development branch, fetch tags and use the latest release as the base.
 For example, when the latest release is v0.4.0 and the change is a compatible feature:

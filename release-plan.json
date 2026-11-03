@@ -1,7 +1,8 @@
 {
-  "base_tag": "v0.4.0",
-  "version": "0.5.0",
-  "bump": "minor",
-  "reason": "Add strongest eligible elixir rank selection within the existing six groups while retaining commands, saved toggles and manual secure activation. This is a backward-compatible feature; management automation does not change the addon version.",
+  "base_tag": "v0.5.0",
+  "version": "0.5.1",
+  "bump": "patch",
+  "reason": "Correct GitHub and CurseForge release display names with an owner-requested patch version. The complete shipped diff from v0.5.0 changes only the TOC version; addon behavior, settings and commands are unchanged.",
+  "version_only_approval": "Owner explicitly requested 'lav en version 0.5.1 i så fald' in the maintenance session after being told the name-only fix would otherwise retain 0.5.0. This authorizes preparing 0.5.1, not publication.",
   "content_sha256": "a252b71aaffefe466c8a31957b12483fd1ac2ea15082fd33b7041822b2131b18"
 }

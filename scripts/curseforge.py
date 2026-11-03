@@ -91,7 +91,7 @@ def upload_metadata(versions, version_id, version_name, type_id, tag, release_ty
     return {
         "changelog": changelog,
         "changelogType": "markdown",
-        "displayName": "ForeverElixirManager " + tag,
+        "displayName": "ForeverElixirManager-" + tag,
         "gameVersions": [version_id],
         "releaseType": release_type,
         "isMarkedForManualRelease": manual_release,

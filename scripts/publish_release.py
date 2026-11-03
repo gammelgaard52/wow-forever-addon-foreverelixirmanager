@@ -102,7 +102,7 @@ def publish(version, release_type, approved=False):
     flags = ["--prerelease", "--latest=false"] if proposal["prerelease"] else ["--latest"]
     # Tag, GitHub release and CurseForge submission belong to the same approved run.
     gh("release", "create", tag, str(archive), "--verify-tag", "--title",
-       f"ForeverElixirManager {tag} ({release_type.title()})", "--notes-file", str(notes), *flags)
+       f"ForeverElixirManager-{tag} ({release_type.title()})", "--notes-file", str(notes), *flags)
     with tempfile.TemporaryDirectory(prefix="fem-published-") as directory:
         gh("release", "download", tag, "--pattern", archive.name, "--dir", directory)
         if (Path(directory) / archive.name).read_bytes() != validated_bytes:
