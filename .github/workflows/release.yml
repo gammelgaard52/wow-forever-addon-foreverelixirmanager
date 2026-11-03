@@ -51,4 +51,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "$GITHUB_REF_NAME" dist/*.zip --verify-tag --title "ForeverElixirManager $GITHUB_REF_NAME" --notes-file CHANGELOG.md
+          # Pre-1.0 builds are experimental; do not advertise them as stable/latest.
+          release_flags=()
+          if [[ "$GITHUB_REF_NAME" == v0.* ]]; then
+            release_flags+=(--prerelease --latest=false)
+          fi
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --verify-tag --title "ForeverElixirManager $GITHUB_REF_NAME" --notes-file CHANGELOG.md "${release_flags[@]}"

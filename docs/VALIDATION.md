@@ -116,6 +116,61 @@ PASS; see [the recorded run and configuration](CURSEFORGE.md). The older table
 above records the 2 November state. Project upload permission, actual automated
 upload and all live-client results remain NOT VERIFIED.
 
+## wowlua experiment (issue #4)
+
+On 3 November 2026, the pinned
+[wowlua v0.13.8 release](https://github.com/DomenikIrrgang/wowlua/releases/tag/v0.13.8)
+was evaluated in an isolated temporary copy of the addon. The downloaded Windows
+x86_64 ZIP matched its release SHA-256:
+`a150e84df47d15e3878624cd3137afa20f15165aff4d3e07f6ce604208e22ec4`.
+No addon was deployed and no framework/UI files are included in the release ZIP.
+
+The [framework's testing guide](https://github.com/DomenikIrrgang/wowlua/blob/v0.13.8/docs/guide/testing.md)
+documents the camelot emulator and optional Blizzard UI. Without that UI,
+RegisterStateDriver is unavailable in this experiment and the addon correctly
+leaves the queue disabled. With `test.blizzard-ui=true`, wowlua fetched UI source
+revision `172a387e3ab8` and produced these results using synthetic item data:
+
+| Probe | Result |
+|---|---|
+| Startup creates the secure button | PASS |
+| Commands change per-character on/off settings | PASS |
+| Bag event queues an item after advancing virtual time | FAIL: item stayed nil |
+| Combat state driver clears a manually prepared action | FAIL: type stayed item |
+
+The failures are unresolved differences between the emulator execution and our
+mocked expectations. They do not establish which behavior the actual client has.
+Do not patch the addon merely to accommodate an emulator, or claim that the
+passing probes validate secure clicks. The original 18 Lua scenarios remain the
+required regression suite; this new experiment is non-gating and #4 stays open.
+
+Reproduce with the reviewed binary (not installed by this repository):
+
+```text
+python scripts/probe_wowlua.py --binary /path/to/wowlua
+```
+
+The runner requires exactly 0.13.8, creates a disposable addon copy, enables the
+Blizzard UI and runs `tests/wowlua/*.test.wowlua`. UI data is cached under ignored
+`dist/wowlua-cache`; later runs can add `--offline`. It returns the real failing
+exit status (currently 2 passed / 2 failed). Tests run in separate emulator worlds
+so one combat failure does not contaminate the startup/command probes.
+
+WoWUnit was also reviewed from its
+[maintainer README](https://github.com/Jaliborc/WoWUnit/blob/master/README.md).
+It runs in the game and does not supply the unavailable Forever client. It has
+not been installed or claimed as compatible. Next for #4: isolate the event and
+state-driver discrepancies against framework evidence and, when available, the
+actual client before deciding whether to adopt an emulator CI job.
+
+## Alpha distribution decision
+
+On 3 November 2026 the owner authorized an experimental 0.4.0 Alpha release
+without live-client tests because they cannot test the game yet. This overrides
+the usual pre-release checklist requirement for this specific Alpha; all missing
+client results and the emulator discrepancies above remain disclosed. GitHub
+marks pre-1.0 releases as prereleases. CurseForge classification is Alpha.
+
 ## In-game checklist - all NOT VERIFIED until a tester records results
 
 Record date, locale, exact GetBuildInfo() output and PASS / FAIL for each step.
