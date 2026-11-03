@@ -1,13 +1,45 @@
 -- Copyright (c) 2026 Martin Gammelgård Rasmussen. MIT; see packaged LICENSE.
--- Original fixed priority and English buff-name assumptions; see docs/VALIDATION.md.
+-- Forever rank evidence and English buff-name assumptions: docs/ELIXIR_RANKS.md.
 local PREFIX = "|cff8bcaff[ElixirManager]|r "
 local elixirs = {
-    { id = 2458, name = "Elixir of Minor Fortitude" },
-    { id = 250330, name = "Minor Cleric's Elixir" },
-    { id = 250339, name = "Minor Mageblood Elixir" },
-    { id = 250344, name = "Elixir of Minor Spirit" },
-    { id = 3383, name = "Elixir of Wisdom" },
-    { id = 3389, name = "Elixir of Lesser Defense" },
+    -- Group IDs preserve existing saved toggles. Ranks are strongest first.
+    { id = 2458, name = "Fortitude", ranks = {
+        { id = 250335, name = "Elixir of Greater Fortitude", strength = 400 },
+        { id = 250334, name = "Elixir of Fortitude", strength = 200 },
+        { id = 3825, name = "Elixir of Lesser Fortitude", strength = 120 },
+        { id = 2458, name = "Elixir of Minor Fortitude", strength = 27 },
+    } },
+    { id = 250330, name = "Cleric's", ranks = {
+        { id = 250333, name = "Greater Cleric's Elixir", strength = 40 },
+        { id = 250332, name = "Cleric's Elixir", strength = 30 },
+        { id = 250331, name = "Lesser Cleric's Elixir", strength = 20 },
+        { id = 250330, name = "Minor Cleric's Elixir", strength = 10 },
+    } },
+    { id = 250339, name = "Mageblood", ranks = {
+        { id = 250341, name = "Greater Mageblood Elixir", strength = 20 },
+        { id = 20007, name = "Mageblood Elixir", strength = 12 },
+        { id = 250340, name = "Lesser Mageblood Elixir", strength = 6 },
+        { id = 250339, name = "Minor Mageblood Elixir", strength = 3 },
+    } },
+    { id = 250344, name = "Spirit", ranks = {
+        { id = 250347, name = "Elixir of Greater Spirit", strength = 18 },
+        { id = 250346, name = "Elixir of Spirit", strength = 10 },
+        { id = 250345, name = "Elixir of Lesser Spirit", strength = 6 },
+        { id = 250344, name = "Elixir of Minor Spirit", strength = 3 },
+    } },
+    { id = 3383, name = "Intellect", ranks = {
+        { id = 9179, name = "Elixir of Greater Intellect", strength = 25 },
+        { id = 250354, name = "Elixir of Intellect", strength = 10 },
+        -- Equal effect: prefer Wisdom's longer database duration, then Lesser.
+        { id = 3383, name = "Elixir of Wisdom", strength = 6 },
+        { id = 250353, name = "Elixir of Lesser Intellect", strength = 6 },
+    } },
+    { id = 3389, name = "Defense", ranks = {
+        { id = 13445, name = "Elixir of Greater Defense", strength = 450 },
+        { id = 8951, name = "Elixir of Defense", strength = 250 },
+        { id = 3389, name = "Elixir of Lesser Defense", strength = 150 },
+        { id = 5997, name = "Elixir of Minor Defense", strength = 50 },
+    } },
 }
 local frame = CreateFrame("Frame")
 local button, settings, queuedID, lastMessage, startupError
@@ -43,9 +75,15 @@ local function activeAuras()
     end
     return nil, "Aura scan limit reached; selection stopped."
 end
-local function candidate(entry, level, active)
+local function activeStrength(group, active)
+    local strength = 0
+    for _, entry in ipairs(group.ranks) do
+        if active[entry.name] then strength = math.max(strength, entry.strength) end
+    end
+    return strength
+end
+local function candidate(entry, level)
     local id = entry.id
-    if settings[id] == false or active[entry.name] then return end
     local count = C_Item.GetItemCount(id, false, false, false, false)
     if not integer(count, 1) or pendingItems[id] == "failed" then return end
     local name, _, _, _, minimum = C_Item.GetItemInfo(id)
@@ -65,9 +103,17 @@ local function selectItem()
     if not integer(level, 1) then return nil, "Player level unavailable." end
     local active, detail = activeAuras()
     if not active then return nil, detail end
-    for _, entry in ipairs(elixirs) do
-        local name = candidate(entry, level, active)
-        if name then return entry.id, "Next up: " .. name end
+    for _, group in ipairs(elixirs) do
+        if settings[group.id] ~= false then
+            local strength = activeStrength(group, active)
+            for _, entry in ipairs(group.ranks) do
+                -- Never replace a recognized equal/stronger effect with a weaker one.
+                if entry.strength > strength then
+                    local name = candidate(entry, level)
+                    if name then return entry.id, "Next up: " .. name end
+                end
+            end
+        end
     end
     return nil, "No missing enabled elixir available for your level."
 end
@@ -178,7 +224,7 @@ SlashCmdList.FOREVERELIXIR = function(arg)
         local ok, active = pcall(activeAuras)
         if not ok or not active then say("Aura data unavailable."); return end
         for _, item in ipairs(elixirs) do
-            say(item.name .. ": " .. (active[item.name] and "ACTIVE" or "MISSING"))
+            say(item.name .. ": " .. (activeStrength(item, active) > 0 and "ACTIVE" or "MISSING"))
         end
     elseif (command == "enable" or command == "disable") and entry then
         if locked() then say("Configuration unavailable in combat."); return end

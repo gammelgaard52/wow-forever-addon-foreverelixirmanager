@@ -4,11 +4,12 @@
 
 ![ForeverElixirManager artwork](assets/logo.jpg)
 
-The addon checks your buffs and bags in a fixed order and prepares one elixir.
+The addon checks six effect groups in a fixed order and prepares the strongest
+listed elixir you carry and meet the level requirement for.
 Press your macro to use it. Nothing is consumed automatically, and selection
 pauses in combat. Enable or disable individual elixirs if needed.
 
-**Experimental 0.4.0**, targeting Forever beta interface **16001**. The original
+**Experimental 0.5.0 candidate**, targeting Forever beta interface **16001**. The original
 English buff names are assumed, not verified. If an active buff is shown as
 missing, disable that entry. Live client compatibility remains **NOT VERIFIED**;
 see [validation and limitations](docs/VALIDATION.md).
@@ -37,26 +38,32 @@ If the client rejects the click, use the normal item action bar.
 | Command | Effect |
 |---|---|
 | `/fem` | Refresh and show help |
-| `/fem list` | Show the fixed list and on/off choices |
-| `/fem enable N` / `/fem disable N` | Turn elixir number N on or off |
+| `/fem list` | Show the six effect groups and on/off choices |
+| `/fem enable N` / `/fem disable N` | Turn effect group N on or off, including all ranks |
 | `/fem buffs` | Show tracked buffs as active or missing |
 | `/fem status` | Show the next elixir |
 
-The fixed order is: **1** Minor Fortitude, **2** Minor Cleric's,
-**3** Minor Mageblood, **4** Minor Spirit, **5** Wisdom, **6** Lesser Defense.
-For example, `/fem disable 2` skips Minor Cleric's Elixir. Choices are saved per
-character; configuration changes are unavailable in combat.
+The fixed group order is: **1** Fortitude, **2** Cleric's,
+**3** Mageblood, **4** Spirit, **5** Intellect, **6** Defense.
+For example, `/fem disable 2` skips every Cleric's rank. Choices are saved per
+character; configuration changes are unavailable in combat. Existing disabled
+choices also disable higher ranks when upgrading from 0.4.0.
+
+Within each group, unavailable or over-level ranks fall back to the next eligible
+rank. A recognized equal/stronger active buff blocks weaker replacements; a weaker
+buff allows a manual upgrade. Strength follows the listed effect, not item level.
+See the [supported ranks and evidence](docs/ELIXIR_RANKS.md).
 
 ## Limitations and upgrades
 
-Buff detection uses the original English item labels as exact buff names. Different
-aura names, other locales, stronger buffs and replacement effects are not handled.
-Disable affected entries with `/fem disable N`. Item IDs and stacking also need
+Buff detection uses English item labels as exact buff names. Different aura names,
+other locales, unlisted ranks, class buffs and combined-stat effects are not handled.
+Disable affected groups with `/fem disable N`. Item IDs and stacking also need
 in-game verification. Unavailable client data or insufficient level prevents an
 item from being queued; cooldowns and other use restrictions remain the client's
 responsibility. After an item-data load failure, reload once data is available.
 
-Upgrading from 0.3.0 keeps on/off choices. Custom priorities, aura mappings and
+Upgrading from 0.3.0 or 0.4.0 keeps on/off choices. Custom priorities, aura mappings and
 blockers are no longer used; their saved data is retained for rollback. Older
 account-wide on/off choices are copied on first use for each character.
 
