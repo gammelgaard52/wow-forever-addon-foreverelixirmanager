@@ -9,7 +9,7 @@ listed elixir you carry and meet the level requirement for.
 Press your macro to use it. Nothing is consumed automatically, and selection
 pauses in combat. Enable or disable effect groups if needed.
 
-**Experimental 0.5.0 candidate**, targeting Forever beta interface **16001**. The original
+**Experimental 0.5.1 candidate**, targeting Forever beta interface **16001**. The original
 English buff names are assumed, not verified. If an active buff is shown as
 missing, disable that entry. Live client compatibility remains **NOT VERIFIED**;
 see [validation and limitations](docs/VALIDATION.md).

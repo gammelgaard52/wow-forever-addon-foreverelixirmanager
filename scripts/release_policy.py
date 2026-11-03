@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def check_policy():
     version = validate.metadata()
     decision = json.loads((ROOT / "release-plan.json").read_text(encoding="utf-8"))
-    if not isinstance(decision, dict) or set(decision) != {"base_tag", "version", "bump", "reason", "content_sha256"}:
+    required = {"base_tag", "version", "bump", "reason", "content_sha256"}
+    if not isinstance(decision, dict) or set(decision) not in (required, required | {"version_only_approval"}):
         raise ValueError("A reviewed release-plan.json with base_tag/version/bump/reason/content_sha256 is required")
     base = decision["base_tag"]
     if not isinstance(base, str) or not re.fullmatch("v" + validate.VERSION_RE, base):
@@ -37,7 +38,12 @@ def check_policy():
         raise ValueError("Baseline tag and its TOC version disagree")
     git("merge-base", "--is-ancestor", base_sha, head)
     result = plan(base_version, head_version, base_files, head_files, decision["bump"])
-    if result["decision"] != "addon-change":
+    if "version_only_approval" in decision:
+        approval = decision["version_only_approval"]
+        if (not isinstance(approval, str) or not approval.strip()
+                or decision["bump"] != "patch" or result["decision"] != "version-only-review"):
+            raise ValueError("Owner-approved version-only releases require a documented request, patch increment and unchanged addon content")
+    elif result["decision"] != "addon-change":
         raise ValueError("A new addon version requires changed shipped content, not management work")
     if "v" + version in tags:
         tagged_sha, tagged_version, tagged_files = snapshot("refs/tags/v" + version)

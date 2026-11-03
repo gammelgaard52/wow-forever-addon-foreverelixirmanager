@@ -113,6 +113,7 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(result["gameVersions"], [123])
         self.assertTrue(result["isMarkedForManualRelease"])
         self.assertEqual(result["changelogType"], "markdown")
+        self.assertEqual(result["displayName"], "ForeverElixirManager-v0.3.0")
         for version, name, kind, tag in [
             ("999", "test-version", "456", "v0.3.0"),
             ("123", "wrong", "456", "v0.3.0"),

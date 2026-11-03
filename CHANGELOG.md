@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.5.1
+
+- Use `ForeverElixirManager-v0.5.1` as the release display name, with the release type appended on GitHub.
+
+Owner-requested patch release for the corrected name. Addon behavior and saved
+settings are unchanged from 0.5.0. Live Forever compatibility remains NOT VERIFIED.
+
 ## 0.5.0
 
 - Select the strongest carried elixir you can use across six effect groups and 24 supported items, with fallback to lower ranks.

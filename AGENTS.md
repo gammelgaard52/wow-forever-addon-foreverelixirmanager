@@ -15,6 +15,9 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
   there is no additional approval checkbox. CurseForge publishes after moderation. Building
   or merging this automation does not authorize executing a release.
 - Addon versions describe changes to the installed addon. Management-only changes (workflows, scripts, tests, documentation, agent instructions, issue templates and unshipped artwork) must not bump the TOC version, add an addon release-note section, create a release tag or publish a new addon package.
+- Exception: an explicit owner request for a version-only patch may be recorded in
+  `release-plan.json` as `version_only_approval`, scoped to its exact base/version.
+  Keep the addon content digest unchanged. Preparation does not authorize publication.
 - CI may rebuild and validate the existing version without releasing it. Version automation must compare shipped content and require an agent-reviewed release decision; commit types or merges alone must not trigger a version bump. Packaging changes require comparing actual ZIPs; never replace a published asset with different bytes.
 - The agent owns semantic classification: inspect the complete shipped diff since
   the previous release and choose patch for compatible fixes, minor for compatible
