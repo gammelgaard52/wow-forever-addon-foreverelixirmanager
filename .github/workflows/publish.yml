@@ -9,18 +9,29 @@ on:
         default: alpha
         required: true
       approve_release:
-        description: Publish this version on GitHub and automatically on CurseForge after moderation
+        description: Approve GitHub and CurseForge publication (unchecked = skip release)
         type: boolean
         default: false
         required: true
 permissions:
   contents: read
-# Serialize approved release runs to prevent concurrent publication.
+# Unapproved requests must not queue behind or displace an approved release.
 concurrency:
-  group: addon-publication
+  group: ${{ inputs.approve_release && 'addon-publication' || format('addon-publication-skipped-{0}', github.run_id) }}
   cancel-in-progress: false
 jobs:
+  not-approved:
+    name: Release skipped - approval missing
+    if: ${{ !inputs.approve_release }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Explain why no release was started
+        run: |
+          echo '::notice::Release skipped because publication approval was not checked.'
+          echo 'No release was started. Select the release type and check publication approval when you want to publish.' >> "$GITHUB_STEP_SUMMARY"
   validate:
+    if: inputs.approve_release
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.plan.outputs.version }}
