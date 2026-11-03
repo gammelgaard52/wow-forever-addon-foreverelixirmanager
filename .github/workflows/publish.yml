@@ -3,46 +3,28 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: Release type on GitHub and CurseForge
+        description: Publish to GitHub and CurseForge as
         type: choice
         options: [alpha, beta, release]
         default: alpha
         required: true
-      approve_release:
-        description: Approve GitHub and CurseForge publication (unchecked = skip release)
-        type: boolean
-        default: false
-        required: true
 permissions:
   contents: read
-# Unapproved requests must not queue behind or displace an approved release.
+# Running this manual workflow approves publication of the selected release type.
 concurrency:
-  group: ${{ inputs.approve_release && 'addon-publication' || format('addon-publication-skipped-{0}', github.run_id) }}
+  group: addon-publication
   cancel-in-progress: false
 jobs:
-  not-approved:
-    name: Release skipped - approval missing
-    if: ${{ !inputs.approve_release }}
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Explain why no release was started
-        run: |
-          echo '::notice::Release skipped because publication approval was not checked.'
-          echo 'No release was started. Select the release type and check publication approval when you want to publish.' >> "$GITHUB_STEP_SUMMARY"
   validate:
-    if: inputs.approve_release
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.plan.outputs.version }}
     steps:
-      - name: Require an approved manual run on main
-        env:
-          APPROVED: ${{ inputs.approve_release }}
+      - name: Require a manual release request on main
         run: |
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
           test "$GITHUB_REF" = refs/heads/main
           test "$GITHUB_REPOSITORY" = gammelgaard52/wow-forever-addon-foreverelixirmanager
-          test "$APPROVED" = true
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -70,7 +52,7 @@ jobs:
           if-no-files-found: error
   publish:
     needs: validate
-    if: github.ref == 'refs/heads/main' && inputs.approve_release
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'gammelgaard52/wow-forever-addon-foreverelixirmanager'
     runs-on: ubuntu-latest
     permissions:
       contents: write

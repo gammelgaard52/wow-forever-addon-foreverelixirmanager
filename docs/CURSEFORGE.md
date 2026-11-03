@@ -101,13 +101,12 @@ Use **Actions → Release addon (Alpha, Beta or Release) → Run workflow**:
 
 1. Select branch `main`.
 2. Select `alpha`, `beta` or `release`.
-3. Tick `approve_release` and run the workflow. This authorizes the tag, GitHub
+3. Click **Run workflow**. This authorizes the tag, GitHub
    publication and automatic CurseForge publication after moderation together.
 
-Without the approval checkbox, GitHub still accepts the manual run. It finishes
-with a notice that the release was skipped; validation and publication jobs do not
-run. No source checkout, build, tag, release or upload occurs. Such a request also
-cannot displace an approved release waiting in the publication queue.
+There is no additional approval checkbox. Every manual run on main requests a real
+release of the selected type, after all validation passes. Use PR checks for testing;
+do not start this workflow merely to validate a build.
 
 The agent determines patch/minor/major from the shipped changes, prepares the
 version and release notes, and records the decision in release-plan.json. The owner
