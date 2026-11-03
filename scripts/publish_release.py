@@ -27,17 +27,15 @@ def release_plan(version, release_type):
         raise ValueError("Choose alpha, beta or release")
     if validate.metadata() != version:
         raise ValueError("Requested version must match the prepared TOC; this workflow never bumps it")
-    check_policy()
+    decision = check_policy()
     tag = "v" + version
     if git("tag", "--list", tag).strip():
         raise ValueError("Version already tagged. Inspect the existing release/upload; do not re-submit")
     head = snapshot("HEAD")[0]
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8-sig")
-    section = re.search(r"(?ms)^## " + re.escape(version) + r"\s*\n(.*?)(?=^## |\Z)", changelog)
-    if not section or not section[1].strip():
-        raise ValueError("The selected version needs nonempty release notes")
+    notes = cf.release_notes(changelog, tag, decision["base_tag"])
     return {"version": version, "tag": tag, "sha": head, "release_type": release_type,
-            "prerelease": release_type != "release", "notes": section[1].strip()}
+            "prerelease": release_type != "release", "notes": notes}
 
 
 def github(path, payload=None, missing_ok=False):

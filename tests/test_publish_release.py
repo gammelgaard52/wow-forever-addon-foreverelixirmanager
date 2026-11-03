@@ -40,7 +40,10 @@ class ReleasePipelineTests(unittest.TestCase):
             "CURSEFORGE_GAME_VERSION_NAME": "1.60.1", "CURSEFORGE_GAME_VERSION_TYPE_ID": "456",
         }
         self.proposal = {"version": "0.5.0", "tag": "v0.5.0", "sha": "a" * 40,
-                         "release_type": "alpha", "prerelease": True, "notes": "Reviewed notes"}
+                         "release_type": "alpha", "prerelease": True,
+                         "notes": publication.cf.release_notes(
+                             "## 0.5.0\n\nReviewed notes\n\n## 0.4.0\n\nOlder notes",
+                             "v0.5.0", "v0.4.0")}
         self.addCleanup(patch.stopall)
         patch.object(publication, "ROOT", self.root).start()
         patch.dict(os.environ, self.env, clear=True).start()
@@ -75,6 +78,8 @@ class ReleasePipelineTests(unittest.TestCase):
         self.assertIn(b'"isMarkedForManualRelease": false', body)
         self.assertIn(b'"releaseType": "' + self.proposal["release_type"].encode() + b'"', body)
         self.assertIn(self.original, body)
+        self.assertIn(json.dumps(self.proposal["notes"]).encode(), body)
+        self.assertEqual((self.root / "dist/approved-release-notes.md").read_text(), self.proposal["notes"])
         return {"id": 99}
 
     def test_channels_and_order_publish_exact_bytes_with_automatic_curseforge_release(self):
@@ -198,7 +203,11 @@ class ReleasePlanTests(unittest.TestCase):
                 commit()
                 result = publication.release_plan("0.5.0", "beta")
                 self.assertTrue(result["prerelease"])
-                self.assertEqual(result["notes"], "New notes")
+                self.assertTrue(result["notes"].endswith("New notes"))
+                self.assertNotIn("Old", result["notes"])
+                self.assertIn("/tree/v0.5.0", result["notes"])
+                self.assertIn("/compare/v0.4.0...v0.5.0", result["notes"])
+                self.assertIn("[Previous Releases]", result["notes"])
                 for version in ("v0.5.0", "0.6.0", "0.5.0;echo", "00.5.0"):
                     with self.assertRaises(ValueError):
                         publication.release_plan(version, "alpha")

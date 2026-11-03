@@ -11,6 +11,29 @@ import uuid
 import zipfile
 
 BASE = "https://wow.curseforge.com/api"
+REPOSITORY_URL = "https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager"
+TAG_RE = r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+
+
+def release_notes(changelog, tag, previous_tag=None):
+    """Render one version's notes with links to its source, diff and release history."""
+    if not re.fullmatch(TAG_RE, tag):
+        raise ValueError("Tag must be vX.Y.Z")
+    if previous_tag is not None:
+        if (not re.fullmatch(TAG_RE, previous_tag)
+                or tuple(map(int, previous_tag[1:].split("."))) >= tuple(map(int, tag[1:].split(".")))):
+            raise ValueError("Previous tag must be an earlier version vX.Y.Z")
+    sections = re.findall(
+        r"(?ms)^##[ \t]+" + re.escape(tag[1:]) + r"[ \t]*\r?\n(.*?)(?=^##[ \t]|\Z)",
+        changelog,
+    )
+    if len(sections) != 1 or not sections[0].strip():
+        raise ValueError("Changelog must contain exactly one nonempty section for " + tag)
+    full = (f"{REPOSITORY_URL}/compare/{previous_tag}...{tag}" if previous_tag
+            else f"{REPOSITORY_URL}/blob/{tag}/CHANGELOG.md")
+    return (f"## [{tag[1:]}]({REPOSITORY_URL}/tree/{tag})\n\n"
+            f"[Full Changelog]({full}) | [Previous Releases]({REPOSITORY_URL}/releases)\n\n"
+            + sections[0].strip())
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -112,6 +135,7 @@ def main(argv=None):
     parser.add_argument("--tag")
     parser.add_argument("--archive", type=Path)
     parser.add_argument("--changelog", type=Path)
+    parser.add_argument("--previous-tag", help="Existing previous release tag for the comparison link")
     parser.add_argument("--release-type", choices=("alpha", "beta", "release"), default="alpha")
     parser.add_argument("--publish-on-approval", action="store_true",
                         help="Authorize automatic CurseForge publication after moderation")
@@ -133,12 +157,13 @@ def main(argv=None):
         raise ValueError("Upload requires tag, archive and changelog")
     project = positive_id(os.environ.get("CURSEFORGE_PROJECT_ID", ""))
     validate_archive(args.archive, args.tag)
+    notes = release_notes(args.changelog.read_text(encoding="utf-8-sig"), args.tag, args.previous_tag)
     metadata = upload_metadata(
         api("/game/versions", token),
         os.environ.get("CURSEFORGE_GAME_VERSION_ID", ""),
         os.environ.get("CURSEFORGE_GAME_VERSION_NAME", ""),
         os.environ.get("CURSEFORGE_GAME_VERSION_TYPE_ID", ""),
-        args.tag, args.release_type, args.changelog.read_text(encoding="utf-8"),
+        args.tag, args.release_type, notes,
         manual_release=not args.publish_on_approval,
     )
     body, content_type = multipart(metadata, args.archive)

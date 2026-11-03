@@ -21,6 +21,33 @@ validation = module("validate")
 
 
 class DistributionTests(unittest.TestCase):
+    def test_release_notes_only_include_selected_version_with_project_links(self):
+        changelog = "# Release notes\n\n## 0.6.0\n\nFuture\n\n## 0.5.0\n\n- Current fix\n\n### Details\nKeep this.\n\n## 0.4.0\n\nOlder\n"
+        for source in (changelog, changelog.replace("\n", "\r\n")):
+            notes = cf.release_notes(source, "v0.5.0", "v0.4.0")
+            self.assertTrue(notes.startswith(f"## [0.5.0]({cf.REPOSITORY_URL}/tree/v0.5.0)"))
+            self.assertIn(f"[Full Changelog]({cf.REPOSITORY_URL}/compare/v0.4.0...v0.5.0)", notes)
+            self.assertIn(f"[Previous Releases]({cf.REPOSITORY_URL}/releases)", notes)
+            self.assertIn("- Current fix", notes)
+            self.assertIn("### Details", notes)
+            self.assertNotIn("Future", notes)
+            self.assertNotIn("Older", notes)
+
+    def test_release_notes_without_previous_tag_link_to_tagged_changelog(self):
+        notes = cf.release_notes("## 0.5.0\n\n- Fix", "v0.5.0")
+        self.assertIn(f"[Full Changelog]({cf.REPOSITORY_URL}/blob/v0.5.0/CHANGELOG.md)", notes)
+        self.assertNotIn("/compare/", notes)
+
+    def test_release_notes_reject_missing_empty_duplicate_or_invalid_versions(self):
+        for source in ("Notes without version", "## 0.4.0\nOlder", "## 0.5.0\n\n## 0.4.0\nOlder",
+                       "## 0.5.0\nOne\n## 0.5.0\nTwo"):
+            with self.assertRaises(ValueError):
+                cf.release_notes(source, "v0.5.0")
+        for tag, previous in (("v00.5.0", None), ("v0.5.0/path", None),
+                              ("v0.5.0", "main"), ("v0.5.0", "v0.5.0"), ("v0.5.0", "v0.6.0")):
+            with self.assertRaises(ValueError):
+                cf.release_notes("## 0.5.0\nNotes", tag, previous)
+
     def test_connection_check_only_reads_catalog(self):
         rows = [{"id": 123, "name": "1.60.1", "gameVersionTypeID": 456}]
         with patch.dict(os.environ, {"CURSEFORGE_API_TOKEN": "test-only"}), patch.object(cf, "api", return_value=rows) as api, patch("builtins.print"):
@@ -128,6 +155,10 @@ class DistributionTests(unittest.TestCase):
                      "--changelog", str(ROOT / "CHANGELOG.md")])
             self.assertEqual(api.call_count, 2)
             self.assertEqual(api.call_args.args[:2], ("/projects/42/upload-file", "test-only"))
+            body = api.call_args.args[2]
+            self.assertIn(b"[Full Changelog]", body)
+            self.assertIn(b"[Previous Releases]", body)
+            self.assertNotIn(b"## 0.4.0", body)
 
     def test_token_header_and_no_redirect_policy(self):
         with patch.object(cf.urllib.request, "build_opener") as build:

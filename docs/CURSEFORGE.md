@@ -125,8 +125,11 @@ file is a separate reviewed metadata operation, not another run of this workflow
 The pipeline pins the workflow commit, validates source/tests and the allowlisted
 ZIP, then verifies the configured Forever catalog tuple before creating anything
 on GitHub. It creates the tag on that exact commit and publishes the selected
-version's release notes and ZIP. It downloads the GitHub asset and compares bytes
-before submitting to CurseForge. `isMarkedForManualRelease=false` requests automatic
+version's release notes and ZIP. GitHub and CurseForge notes contain only that
+version's section, headed by a link to its tagged source, plus **Full Changelog**
+(previous release to current tag) and **Previous Releases** links for this addon.
+It downloads the GitHub asset and compares bytes before submitting to CurseForge.
+`isMarkedForManualRelease=false` requests automatic
 publication once CurseForge approves the file; an upload response is still not
 proof that moderation or public availability is complete. The run summary records
 the source commit, ZIP hash and CurseForge file ID.
@@ -149,7 +152,9 @@ intentional: a timeout after the CurseForge POST may hide an accepted upload.
   from the validated artifact; do not overwrite an existing asset. The agent must
   verify tagged source, release type and exact asset bytes, then obtain approval
   for a targeted recovery using `scripts/curseforge.py --approve-upload` with the
-  existing tag, verified archive and release notes. Use `--publish-on-approval`
+  existing tag, verified archive and full `CHANGELOG.md`; the command extracts only
+  that tag's section. Supply `--previous-tag` for a comparison link; without it,
+  Full Changelog links to the tagged changelog file. Use `--publish-on-approval`
   only when automatic publication is included in that recovery approval.
 - CurseForge upload was attempted or the result is uncertain: inspect project
   files and the run logs first. If a file exists, use that file. Do not rerun the
