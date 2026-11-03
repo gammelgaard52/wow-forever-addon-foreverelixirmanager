@@ -1,0 +1,14 @@
+import test, expect from "wowlua:test"
+import * as mock from "wowlua:mock"
+
+@test("state driver disables a manually prepared item in combat")
+local function combat()
+    mock.defineItem(2458, { name = "Elixir of Minor Fortitude", minLevel = 1 })
+    mock.setBag(0, { slots = 16, items = { [1] = { id = 2458, count = 2 } } })
+    mock.slash("/fem status")
+    expect(_G["ForeverElixirSecureBtn"]:GetAttribute("item")).toBe("item:2458")
+    mock.player:enterCombat()
+    mock.advanceTime(1)
+    expect(_G["ForeverElixirSecureBtn"]:GetAttribute("type")).toBe(nil)
+    expect(mock.errors()).toEqual({})
+end

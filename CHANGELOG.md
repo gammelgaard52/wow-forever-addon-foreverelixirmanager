@@ -2,6 +2,13 @@
 
 ## 0.4.0
 
+Experimental Alpha. The owner approved distribution without live-client testing
+on 3 November 2026 because the game is not yet available for their testing.
+Actual Forever compatibility, secure clicks and combat behavior remain NOT VERIFIED.
+An optional emulator experiment also exposes unresolved bag-refresh and state-driver
+discrepancies; these are not confirmed client bugs. Use the documented combat-guarded
+macro and treat this build as a test candidate, not a validated stable release.
+
 - Add a vector SVG version of the current elixir logo.
 - Restore the simple 0.2.0 controls: list, enable/disable, buffs and status.
 - Restore the original fixed priority and English buff-name matching. No aura-ID

@@ -1,0 +1,17 @@
+import test, expect from "wowlua:test"
+import * as mock from "wowlua:mock"
+
+@test("loads secure button with Blizzard UI")
+local function startup()
+    expect(_G["ForeverElixirSecureBtn"] ~= nil).toBe(true)
+    expect(mock.errors()).toEqual({})
+end
+
+@test("commands update per-character settings")
+local function settings()
+    mock.slash("/fem disable 1")
+    expect(_G["ForeverElixirManagerCharDB"].enabled[2458]).toBe(false)
+    mock.slash("/fem enable 1")
+    expect(_G["ForeverElixirManagerCharDB"].enabled[2458]).toBe(true)
+    expect(mock.errors()).toEqual({})
+end

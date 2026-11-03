@@ -74,6 +74,15 @@ Changes to CI, tests, scripts, documentation or repository management do not bum
 the addon version or publish a release. See the
 [version policy and issue priorities](docs/IMPROVEMENTS.md).
 
+PR checks now include an advisory **Addon version assessment** in the Actions
+job summary. Management-only changes keep the current version. Installed-content
+changes get a proposal; packaging changes require ZIP review. Nothing is written
+or released by this check. Locally: `python scripts/version_plan.py --base origin/main`.
+Use `--bump minor` or `--bump major` when reviewing features or breaking changes.
+
+An optional [wowlua experiment](docs/VALIDATION.md#wowlua-experiment-issue-4)
+reproduces unresolved emulator discrepancies. It is separate from required CI.
+
 ## Forever version monitoring
 
 After merge to main, **Monitor Forever versions** checks CurseForge's configured

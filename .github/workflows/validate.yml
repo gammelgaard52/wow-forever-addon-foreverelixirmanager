@@ -6,6 +6,19 @@ on:
 permissions:
   contents: read
 jobs:
+  version-plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Assess addon version without modifying it
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 scripts/version_plan.py --base "$BASE_SHA" --head "$HEAD_SHA"
   validate:
     runs-on: ubuntu-latest
     steps:

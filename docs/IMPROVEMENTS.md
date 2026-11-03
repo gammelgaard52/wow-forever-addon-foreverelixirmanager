@@ -1,7 +1,8 @@
 # Issue priorities and version policy
 
-Reviewed on 3 November 2026 against main at `c321554` and all five open issues.
-Priorities below are recommendations; issue states have not been changed.
+Reviewed on 3 November 2026, including merged PRs #11 and #12. Each issue was
+checked against existing code before implementation. Issues #5 and #3 are now
+closed with evidence; #4, #7 and #8 track the remaining work below.
 
 ## Prioritized issues
 
@@ -18,6 +19,24 @@ record real client results for the current 0.4.0 behavior. Secure macro clicks,
 combat transitions, actual buff names, item priority, bag refresh and settings
 persistence remain NOT VERIFIED. Use the [existing checklist](VALIDATION.md).
 Neither a new test framework nor a successful upload proves these work.
+
+## Execution update
+
+- #5: completed by PR #11; the requested research and simplicity rules already
+  exist in AGENTS.md. No duplicate implementation was needed.
+- #3: completed by PR #12. The first live monitor check
+  ([run 41700402569](https://github.com/gammelgaard52/wow-forever-addon-foreverelixirmanager/actions/runs/41700402569))
+  passed with no new untracked version; rebuild and issue creation were skipped.
+- #4: wowlua 0.13.8 was actually evaluated against a disposable copy of the addon.
+  See VALIDATION.md for passing startup/command probes and unresolved event/combat
+  failures. Reproduction tests are retained outside the release package. Do not
+  adopt the emulator as a required compatibility gate until those are understood.
+- #7: PR CI now calculates an advisory semantic-version proposal from committed
+  installed content, preserving versions for management-only changes. See below.
+- #8: the upload path and credentials already exist. On 3 November the owner
+  explicitly authorized releasing 0.4.0 as Alpha without live-client testing,
+  because they cannot test the game yet. Record the real upload result in #8;
+  the exception authorizes experimental distribution, not a compatibility claim.
 
 ## Test framework evidence for #4
 
@@ -60,11 +79,21 @@ Current workflow separation:
 - `curseforge.yml`: manual dispatch only; check mode is read-only. Upload requires
   main, upload mode, explicit approval and an existing GitHub release.
 
-No automatic semantic-version writer is currently installed. Keep this separation
-when implementing #7. Acceptance tests for future automation must cover docs-only,
-CI-only, tests-only and tooling-only changes with unchanged output producing no
-bump, as well as mixed changes and packaging changes that alter shipped output.
-An eligible version proposal still requires release approval.
+`scripts/version_plan.py` compares the PR base/head commits and writes an Actions
+summary without modifying files. It compares the addon directory and LICENSE,
+normalizing only the TOC Version line. A newer already-prepared version is kept;
+regressions fail. A version-only change requests intentional release-preparation
+review. Unchanged installed content produces no bump. Changes to the package
+builder or release workflow require actual ZIP review, not an automatic increment.
+
+The default patch proposal is a minimum for review, not inferred compatibility.
+Choose minor for added functionality or incompatible pre-1.0 changes, and major
+when intentionally establishing/breaking the stable contract. The tool supports
+`--bump patch|minor|major`. It does not infer these semantics from commit messages.
+Tests use real temporary Git histories to cover management-only and mixed changes,
+and exercise existing bumps, packaging changes, additions/deletions and regressions.
+No automatic version writer or tag creator is installed. A proposal still requires
+human review and explicit release approval.
 
 ## First automated CurseForge upload
 
@@ -75,8 +104,9 @@ yet submit 0.4.0. No new version is needed for the management work in this revie
 
 Recommended order:
 
-1. Record the 0.4.0 client checklist results. Local validation currently passes
-   18 mocked Lua scenarios and 12 Python distribution tests, but is not a live test.
+1. Record the 0.4.0 client checklist results, or document an explicit experimental
+   distribution exception. The owner approved that exception on 3 November 2026.
+   Local validation passes mocked Lua and Python tests, but is not a live test.
 2. Approve the existing 0.4.0 candidate and the specific `v0.4.0` tag separately.
    Inspect the generated GitHub release and ZIP after release CI succeeds.
 3. Approve one upload to project 1780660 with tag `v0.4.0`, type `alpha`, and

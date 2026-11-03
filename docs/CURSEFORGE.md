@@ -115,11 +115,15 @@ and [issue pagination/state](https://docs.github.com/en/rest/issues/issues#list-
 ## Authorized publication procedure
 
 1. Finish the live-client checklist, review the PR, and approve merging separately.
+   Exception: the owner explicitly authorized 0.4.0 as an unverified Alpha on
+   3 November 2026 because live testing is unavailable. Keep that limitation and
+   the unresolved emulator probes in its release notes; do not claim compatibility.
 2. Obtain explicit approval for the specific GitHub release tag. Ensure the TOC
    version and release notes agree before creating that tag. Keep an already
    prepared, unreleased addon version when only management files changed; those
    changes do not need a version bump. A tag push runs
    validation and publishes the installable GitHub release archive.
+   Pre-1.0 tags create GitHub prereleases and are not marked latest/stable.
 3. Obtain separate approval to upload that version to CurseForge. In Actions,
    select **Check or upload to CurseForge**, run from **main**, select **upload**, supply
    the existing release tag and release type, and tick the upload-authorization
