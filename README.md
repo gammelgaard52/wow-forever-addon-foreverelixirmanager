@@ -71,6 +71,17 @@ it cannot verify actual secure clicks or client behavior.
 GitHub releases require explicitly approved version tags. CurseForge publishing
 is separate; see [publishing setup](docs/CURSEFORGE.md).
 
+## Forever version monitoring
+
+After merge to main, **Monitor Forever versions** checks CurseForge's configured
+Forever category every six hours. A newer, untracked game version triggers tests,
+a rebuild of the existing addon version and a compatibility-review issue with the
+result. The ZIP is a temporary Actions artifact, not a release. Addon version,
+Interface and publication settings remain unchanged.
+
+Run the workflow manually on main for a check; issue creation is off by default
+for manual runs. See [monitor operation and limitations](docs/CURSEFORGE.md#forever-version-monitor).
+
 ## Rollback
 
 Exit the game and back up this addon's account and per-character SavedVariables

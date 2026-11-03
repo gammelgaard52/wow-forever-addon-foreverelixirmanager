@@ -62,6 +62,56 @@ entry with a similar name. No Forever numeric IDs are invented or hardcoded here
 The upload validates the ID, exact name and type tuple; the maintainer must first
 establish that this tuple denotes Forever. Missing catalog support blocks upload.
 
+## Forever version monitor
+
+`.github/workflows/forever-monitor.yml` implements issue #3 as scheduled detection,
+validation and review, independently of addon releases. It uses the existing
+token and version variables above; no additional credentials are needed.
+
+- Schedule: 00:23, 06:23, 12:23 and 18:23 UTC on main, after the workflow is merged.
+  GitHub schedules can be delayed and can be disabled after repository inactivity;
+  this is periodic checking, not an immediate Blizzard release webhook.
+- Source: authenticated GET of the CurseForge game-version catalog. The configured
+  baseline ID/name/type must match. Only that Forever type is considered; version
+  components are compared numerically, independently of catalog order and IDs.
+- A newer latest version triggers Lua syntax checks, the existing mocked tests,
+  distribution tests and a ZIP rebuild without changing the TOC or addon version.
+  A successful ZIP is retained as an Actions artifact for 14 days.
+- An issue records the candidate, workflow link and rebuild result, including a
+  failed rebuild. It requests actual client evidence and any needed change PR.
+  This workflow never commits, tags, creates releases or uploads to CurseForge.
+- Existing open AND closed issues are checked with pagination and an exact hidden
+  marker. Preserve that marker. The same version is not reported/rebuilt again;
+  if several versions appeared between runs, only the newest gets a review issue.
+  Runs are serialized, and the report job rechecks before creating an issue.
+- Errors fetching or validating catalog/issue data fail the workflow. They do not
+  mean "no update". Inspect failed Actions runs; the detector does not create a
+  speculative compatibility issue without a valid catalog observation.
+
+Manual operation: select **Monitor Forever versions**, branch **main**, and leave
+**notify** unchecked for GET-only detection plus a rebuild if a newer untracked
+version exists. Check notify to allow issue creation. Manual runs on other branches
+are skipped. GitHub issue-write permission is limited to the report job; the
+CurseForge token is only exposed to the catalog GET step.
+
+This monitors CurseForge version entries, not every Blizzard client build/hotfix.
+It may lag the client release, and a hotfix under the same version is invisible.
+New type IDs or unexpected version-name formats require manual review. A catalog
+entry is not proof of a supported Interface, API or item behavior. Automated
+results remain separate from the live-client checklist in VALIDATION.md.
+
+After reviewing a new version, update the three configured version variables
+together only when supported by client evidence. The monitor never updates them.
+Closing the issue intentionally suppresses repeats, including after a failed build.
+For another build, rerun the relevant failed job or manually run **Release WoW
+addon** on main (artifact only, no release); record the result in the existing
+issue. Do not delete issues to force duplicate reports. Disable the monitor in
+Actions to stop scheduled runs; this has no effect on the installed addon.
+
+References: [catalog API](https://support.curseforge.com/support/solutions/articles/9000197321-curseforge-upload-api),
+[GitHub schedule behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+and [issue pagination/state](https://docs.github.com/en/rest/issues/issues#list-repository-issues).
+
 ## Authorized publication procedure
 
 1. Finish the live-client checklist, review the PR, and approve merging separately.

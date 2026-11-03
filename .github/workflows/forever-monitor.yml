@@ -1,0 +1,88 @@
+name: Monitor Forever versions
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      notify:
+        description: Create a compatibility issue if a new Forever version is found
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: forever-version-monitor
+  cancel-in-progress: false
+jobs:
+  detect:
+    if: github.ref == 'refs/heads/main' && github.repository == 'gammelgaard52/wow-forever-addon-foreverelixirmanager'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+    outputs:
+      changed: ${{ steps.catalog.outputs.changed }}
+      name: ${{ steps.catalog.outputs.name }}
+      version_id: ${{ steps.catalog.outputs.version_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Detect newer Forever catalog version (GET only)
+        id: catalog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          CURSEFORGE_GAME_VERSION_ID: ${{ vars.CURSEFORGE_GAME_VERSION_ID }}
+          CURSEFORGE_GAME_VERSION_NAME: ${{ vars.CURSEFORGE_GAME_VERSION_NAME }}
+          CURSEFORGE_GAME_VERSION_TYPE_ID: ${{ vars.CURSEFORGE_GAME_VERSION_TYPE_ID }}
+        run: python3 scripts/monitor_forever.py detect
+  rebuild:
+    needs: detect
+    if: needs.detect.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Lua 5.1
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+      - name: Validate and rebuild existing addon version
+        shell: bash
+        run: |
+          set -euo pipefail
+          luac5.1 -p ForeverElixirManager/ForeverElixirManager.lua tests/addon_test.lua
+          python3 scripts/validate.py
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forever-compatibility-${{ needs.detect.outputs.name }}-${{ github.run_id }}
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 14
+  report:
+    needs: [detect, rebuild]
+    if: >-
+      always() && !cancelled() && needs.detect.result == 'success' &&
+      needs.detect.outputs.changed == 'true' &&
+      (github.event_name == 'schedule' || inputs.notify)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record compatibility review, including failed rebuilds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURSEFORGE_GAME_VERSION_TYPE_ID: ${{ vars.CURSEFORGE_GAME_VERSION_TYPE_ID }}
+          GAME_VERSION: ${{ needs.detect.outputs.name }}
+          GAME_VERSION_ID: ${{ needs.detect.outputs.version_id }}
+          REBUILD_RESULT: ${{ needs.rebuild.result }}
+        run: python3 scripts/monitor_forever.py report --name "$GAME_VERSION" --version-id "$GAME_VERSION_ID" --result "$REBUILD_RESULT"
