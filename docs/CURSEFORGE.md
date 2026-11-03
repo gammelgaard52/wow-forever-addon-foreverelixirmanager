@@ -65,8 +65,10 @@ establish that this tuple denotes Forever. Missing catalog support blocks upload
 ## Authorized publication procedure
 
 1. Finish the live-client checklist, review the PR, and approve merging separately.
-2. Obtain explicit approval for the specific GitHub release tag. Update the TOC
-   version and release notes together before creating that tag. A tag push runs
+2. Obtain explicit approval for the specific GitHub release tag. Ensure the TOC
+   version and release notes agree before creating that tag. Keep an already
+   prepared, unreleased addon version when only management files changed; those
+   changes do not need a version bump. A tag push runs
    validation and publishes the installable GitHub release archive.
 3. Obtain separate approval to upload that version to CurseForge. In Actions,
    select **Check or upload to CurseForge**, run from **main**, select **upload**, supply
