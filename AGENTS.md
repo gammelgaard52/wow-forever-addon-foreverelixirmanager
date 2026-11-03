@@ -58,4 +58,7 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
 - Keep installation, macro setup, commands, limitations and rollback instructions in README.
 - Describe API assumptions separately from confirmed client behavior.
 - Include release notes for user-facing changes; keep core addon lightweight.
+- Write each version's notes as concise bullets of its main user-facing changes,
+  followed by any necessary compatibility or upgrade notes. The publication tool
+  adds the linked version heading and Full Changelog link above those highlights.
 - Report what changed, what was actually validated, and what remains to be tested.
