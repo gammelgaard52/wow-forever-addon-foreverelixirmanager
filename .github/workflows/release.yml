@@ -5,12 +5,16 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: addon-publication
+  cancel-in-progress: false
 jobs:
   package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       - name: Install Lua 5.1
         run: sudo apt-get update && sudo apt-get install -y lua5.1
@@ -19,6 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           luac5.1 -p ForeverElixirManager/ForeverElixirManager.lua tests/addon_test.lua
+          python3 scripts/release_policy.py
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             python3 scripts/validate.py --tag "$GITHUB_REF_NAME"
           else

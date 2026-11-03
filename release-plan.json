@@ -1,0 +1,7 @@
+{
+  "base_tag": "v0.4.0",
+  "version": "0.5.0",
+  "bump": "minor",
+  "reason": "Add strongest eligible elixir rank selection within the existing six groups while retaining commands, saved toggles and manual secure activation. This is a backward-compatible feature; management automation does not change the addon version.",
+  "content_sha256": "a252b71aaffefe466c8a31957b12483fd1ac2ea15082fd33b7041822b2131b18"
+}

@@ -75,20 +75,26 @@ See [release notes](CHANGELOG.md), [validation](docs/VALIDATION.md) and
 [repository instructions](AGENTS.md). CI tests the Lua logic and installation ZIP;
 it cannot verify actual secure clicks or client behavior.
 
-GitHub releases require explicitly approved version tags. CurseForge publishing
-is separate; see [publishing setup](docs/CURSEFORGE.md).
+To release a prepared version, run **Release addon (Alpha, Beta or Release)**
+manually on `main`, select the type and tick the publication approval. The workflow
+uses the version prepared by the agent, validates, creates the tag and GitHub
+release, and uploads to CurseForge for automatic publication after moderation.
+Alpha/Beta are GitHub prereleases; Release is stable. See
+[publishing setup and recovery](docs/CURSEFORGE.md#release-a-prepared-version).
 Changes to CI, tests, scripts, documentation or repository management do not bump
 the addon version or publish a release. See the
 [version policy and issue priorities](docs/IMPROVEMENTS.md).
 
-PR checks now include an advisory **Addon version assessment** in the Actions
+PR checks include a blocking **release-policy** check against the agent's
+`release-plan.json` decision, plus an advisory **Addon version assessment** in the Actions
 job summary. Management-only changes keep the current version. Installed-content
 changes get a proposal; packaging changes require ZIP review. Nothing is written
 or released by this check. Locally: `python scripts/version_plan.py --base origin/main`.
 Use `--bump minor` or `--bump major` when reviewing features or breaking changes.
 
 For reviewed release preparation, `scripts/prepare_release.py` can update the TOC
-and prepend supplied release notes on a clean branch. It compares against the
+and prepend supplied release notes and record the semantic decision on a clean
+branch. It compares against the
 latest release tag, defaults to a preview, and never commits, tags or uploads.
 Management-only changes do not write a new version. See the
 [preparation commands](docs/IMPROVEMENTS.md#reviewed-release-preparation).

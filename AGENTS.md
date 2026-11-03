@@ -8,8 +8,20 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
 - Commit directly to `main` only when explicitly requested.
 - Preserve unrelated edits; do not merge a PR, publish to CurseForge, or deploy an addon without instruction.
 - Tags `vX.Y.Z` initiate GitHub release packaging. Do not create a release tag without approval.
+- The manual `publish.yml` workflow combines tag creation, GitHub publication and
+  CurseForge submission only after the owner selects Alpha/Beta/Release and
+  explicitly approves the run. CurseForge then publishes after moderation. Building
+  or merging this automation does not authorize executing a release. Its GITHUB_TOKEN
+  tag does not trigger the legacy tag workflow, so it publishes within the same run.
 - Addon versions describe changes to the installed addon. Management-only changes (workflows, scripts, tests, documentation, agent instructions, issue templates and unshipped artwork) must not bump the TOC version, add an addon release-note section, create a release tag or publish a new addon package.
 - CI may rebuild and validate the existing version without releasing it. Future version automation must compare shipped content and require an explicitly reviewed release decision; commit types or merges alone must not trigger a version bump. See `docs/IMPROVEMENTS.md` for the version policy and issue priorities.
+- The agent owns semantic classification: inspect the complete shipped diff since
+  the previous release and choose patch for compatible fixes, minor for compatible
+  features, or major for breaking behavior/settings/command contracts. Record the
+  highest applicable impact and its reason in release-plan.json, prepare the exact
+  next version and notes, bind the decision to the shipped content digest, and run
+  release_policy.py. Do not ask the owner to classify
+  code changes. Alpha/Beta/Release is their distribution choice, independent of SemVer.
 
 ## Before changes
 1. Read this file, README, TOC, Lua source, and relevant workflow files.
@@ -31,7 +43,9 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
 - Keep permissions minimal (GitHub Actions releases require contents:write).
 - Do not commit credentials, tokens, personal logs or local account information.
 - Assets should be original or appropriately licensed; never commit fonts.
-- Use versioned tags for GitHub releases; CurseForge publishing requires a separate explicitly approved workflow and credentials.
+- Use versioned tags for GitHub releases. Publication requires explicit approval
+  through the manual release workflow (or separately approved legacy workflows)
+  and configured credentials. Never treat a merge or monitor rebuild as approval.
 
 ## Documentation
 - Keep installation, macro setup, commands, limitations and rollback instructions in README.

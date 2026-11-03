@@ -6,6 +6,15 @@ on:
 permissions:
   contents: read
 jobs:
+  release-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Enforce the reviewed semantic version and immutable shipped content
+        run: python3 scripts/release_policy.py
   version-plan:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

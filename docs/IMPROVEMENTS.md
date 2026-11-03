@@ -82,6 +82,11 @@ Current workflow separation:
   `vX.Y.Z` tag push publishes the GitHub release after checking TOC/tag agreement.
 - `curseforge.yml`: manual dispatch only; check mode is read-only. Upload requires
   main, upload mode, explicit approval and an existing GitHub release.
+- `publish.yml`: the recommended combined release path, manual dispatch only on
+  main with a prepared TOC version, selected Alpha/Beta/Release and approval. After
+  validation it creates the tag and GitHub release and submits to CurseForge for
+  automatic publication after moderation. It never writes addon versions and
+  rejects already-tagged versions or management-only version increments.
 
 `scripts/version_plan.py` compares the PR base/head commits and writes an Actions
 summary without modifying files. It compares the addon directory and LICENSE,
@@ -90,14 +95,27 @@ regressions fail. A version-only change requests intentional release-preparation
 review. Unchanged installed content produces no bump. Changes to the package
 builder or release workflow require actual ZIP review, not an automatic increment.
 
-The default patch proposal is a minimum for review, not inferred compatibility.
-Choose minor for added functionality or incompatible pre-1.0 changes, and major
-when intentionally establishing/breaking the stable contract. The tool supports
+The advisory patch proposal is a minimum, not inferred compatibility. The agent
+must inspect all shipped changes since the previous release and select the highest
+applicable impact: patch for compatible fixes, minor for compatible features, major
+for breaking behavior/settings/command contracts. This repository uses that explicit
+contract even before 1.0. The owner chooses distribution type, not code semantics.
+The preparation tool supports
 `--bump patch|minor|major`. It does not infer these semantics from commit messages.
 Tests use real temporary Git histories to cover management-only and mixed changes,
 and exercise existing bumps, packaging changes, additions/deletions and regressions.
-The PR job is advisory. The separate preparation command below writes files only
-when deliberately invoked with `--apply`; tags and publication remain separate.
+The assessment job is advisory. The **release-policy** CI job and both publication
+paths enforce the recorded decision: the base tag must be the newest prior tag,
+the TOC and release-plan.json must agree, and the version must be exactly the
+declared patch/minor/major increment. The decision includes a digest of all shipped
+content, so later addon edits require a new agent review even before the tag exists.
+Version skips, regressions, management-only
+bumps, missing decisions and changes to shipped content under an existing tag
+fail. This checks the agent's recorded semantic judgment; it cannot infer whether
+arbitrary Lua changes are breaking. The agent remains responsible for that judgment.
+
+The preparation command writes files only with `--apply`; tags and publication
+remain separate. Management-only edits preserve the current decision and version.
 
 ## Reviewed release preparation
 
@@ -107,17 +125,18 @@ tags and compare with the latest reachable release (currently `v0.4.0`):
 ```text
 git fetch origin --tags
 python scripts/prepare_release.py --base v0.4.0 --bump minor
-python scripts/prepare_release.py --base v0.4.0 --bump minor --notes-file /path/to/reviewed-notes.txt --apply
-git diff -- ForeverElixirManager/ForeverElixirManager.toc CHANGELOG.md
+python scripts/prepare_release.py --base v0.4.0 --bump minor --notes-file /path/to/reviewed-notes.txt --reason "Add compatible rank selection" --apply
+git diff -- ForeverElixirManager/ForeverElixirManager.toc CHANGELOG.md release-plan.json
 python scripts/validate.py
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Choose patch/minor/major by reviewing behavior; the tool does not infer feature
+The agent chooses patch/minor/major by reviewing behavior; the tool does not infer
 semantics from commit titles. Supply the release-note body without a version
 heading in a file outside the working tree (or an ignored development location).
-The preview writes nothing. Applying writes only the TOC version and a new
-CHANGELOG section, for a PR review. It never commits, pushes, tags or publishes.
+The preview writes nothing. Applying writes the TOC version, a new CHANGELOG
+section and release-plan.json with the reviewed reason, for a PR review. It never
+commits, pushes, tags or publishes.
 
 Guards require a clean working tree, matching base tag/TOC, an ancestor baseline
 with no newer reachable release tag, and an unused target tag. Application also

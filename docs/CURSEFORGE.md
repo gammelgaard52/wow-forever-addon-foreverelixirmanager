@@ -134,7 +134,73 @@ References: [catalog API](https://support.curseforge.com/support/solutions/artic
 [GitHub schedule behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 and [issue pagination/state](https://docs.github.com/en/rest/issues/issues#list-repository-issues).
 
-## Authorized publication procedure
+## Release a prepared version
+
+Use **Actions → Release addon (Alpha, Beta or Release) → Run workflow**:
+
+1. Select branch `main`.
+2. Select `alpha`, `beta` or `release`.
+3. Tick `approve_release` and run the workflow. This authorizes the tag, GitHub
+   publication and automatic CurseForge publication after moderation together.
+
+The agent determines patch/minor/major from the shipped changes, prepares the
+version and release notes, and records the decision in release-plan.json. The owner
+does not enter a version or classify code changes. The workflow automatically uses
+the prepared version. A blocking release-policy check verifies the exact increment,
+source digest, baseline tag and immutable released content. Any later shipped
+change invalidates the recorded decision until the agent reviews it again.
+The current decision is 0.4.0 → 0.5.0, a minor increment for the rank-selection
+feature; the management automation does not increment it again.
+
+| Selected type | GitHub | CurseForge |
+|---|---|---|
+| Alpha | Prerelease, not latest; title includes Alpha | Alpha, publish after moderation |
+| Beta | Prerelease, not latest; title includes Beta | Beta, publish after moderation |
+| Release | Stable release, marked latest | Release, publish after moderation |
+
+This mapping follows the explicit selection even for 0.x versions. Channel and
+semantic version are separate: the numeric tag remains `vX.Y.Z`. A different type
+does not permit another upload under an existing tag. Promotion of an existing
+file is a separate reviewed metadata operation, not another run of this workflow.
+
+The pipeline pins the workflow commit, validates source/tests and the allowlisted
+ZIP, then verifies the configured Forever catalog tuple before creating anything
+on GitHub. It creates the tag on that exact commit and publishes the selected
+version's release notes and ZIP. It downloads the GitHub asset and compares bytes
+before submitting to CurseForge. `isMarkedForManualRelease=false` requests automatic
+publication once CurseForge approves the file; an upload response is still not
+proof that moderation or public availability is complete. The run summary records
+the source commit, ZIP hash and CurseForge file ID.
+
+The GitHub token receives contents:write only in the publication job. The
+CurseForge secret is exposed only to its publication step. All publication
+workflows share a concurrency group. The new workflow explicitly creates the
+GitHub release because [tags created with GITHUB_TOKEN do not trigger another
+workflow](https://docs.github.com/en/actions/concepts/security/github_token).
+There is no push, PR, schedule or release-event trigger for this workflow.
+
+## Partial failure and recovery
+
+The pipeline never retries an upload or replaces an existing tag/release. A
+second run stops if the tag exists, even if the first run failed later. This is
+intentional: a timeout after the CurseForge POST may hide an accepted upload.
+
+- Before tag creation: correct the reported validation/configuration error, then
+  start a new approved run.
+- Tag/GitHub release exists but CurseForge upload did not run: preserve the tag
+  and exact ZIP. Inspect the failed step and repair missing GitHub assets only
+  from the validated artifact; do not overwrite an existing asset. Once verified,
+  the existing CurseForge-only workflow can upload that release separately.
+- CurseForge upload was attempted or the result is uncertain: inspect project
+  files and the run logs first. If a file exists, use that file. Do not rerun the
+  POST or delete/recreate the GitHub tag to bypass the duplicate guard.
+
+## Legacy separate publication procedure
+
+The older workflows remain available for connection checks, artifact-only builds
+and reviewed recovery. Their behavior is different from the combined workflow:
+the old tag workflow marks pre-1.0 as prereleases, and the old CurseForge workflow
+still requests manual publication. Use the combined workflow for new releases.
 
 1. Finish the live-client checklist, review the PR, and approve merging separately.
    Exception: the owner explicitly authorized 0.4.0 as an unverified Alpha on
@@ -159,8 +225,9 @@ and [issue pagination/state](https://docs.github.com/en/rest/issues/issues#list-
 
 Do not re-run a timed-out or uncertain upload without checking the project files:
 the API does not document an idempotency key, and another POST can duplicate a file.
-The workflow serializes runs for each tag, and the script does not retry POSTs.
-The token is scoped to the upload step; GitHub permissions are read-only.
+Publication workflows serialize all runs, and the script does not retry POSTs.
+In the legacy upload-only workflow, the token is scoped to the upload step and
+GitHub permissions are read-only.
 
 ## Moderation and first submission
 
