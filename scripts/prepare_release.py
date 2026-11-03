@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import re
 
-from version_plan import TOC, VERSION, git, next_version, plan, shipped_digest, snapshot
+from version_plan import TOC, VERSION, git, next_version, plan, publication_digest, shipped_digest, snapshot
 
 
 def prepare(base, bump, notes_file=None, apply=False, reason=None):
@@ -26,11 +26,11 @@ def prepare(base, bump, notes_file=None, apply=False, reason=None):
            for t in numeric):
         raise ValueError("Use the newest release tag reachable from HEAD as the baseline")
     result = plan(base_version, head_version, base_files, head_files, bump)
-    if (result["decision"] == "addon-change" and head_version != base_version
+    if (result["decision"] in ("addon-change", "publication-change") and head_version != base_version
             and head_version != next_version(base_version, bump)):
         raise ValueError("Prepared version differs from the reviewed increment; reconcile the release decision")
     result["written"] = False
-    if result["decision"] != "addon-change" or result["bump"] == "none":
+    if result["decision"] not in ("addon-change", "publication-change") or result["bump"] == "none":
         return result
     version = result["suggested_version"]
     if git("tag", "--list", "v" + version).strip():
@@ -63,7 +63,8 @@ def prepare(base, bump, notes_file=None, apply=False, reason=None):
     decision_path = root / "release-plan.json"
     old_decision = decision_path.read_bytes() if decision_path.exists() else None
     decision = {"base_tag": base, "version": version, "bump": bump, "reason": reason.strip(),
-                "content_sha256": shipped_digest(head_files)}
+                "content_sha256": shipped_digest(head_files),
+                "publication_sha256": publication_digest({**head_files, "CHANGELOG.md": new_log})}
     # Prepare all outputs first; restore the originals if a write fails.
     try:
         toc_path.write_bytes(new_toc)

@@ -187,7 +187,6 @@ class ReleasePlanTests(unittest.TestCase):
             commit()
             git("tag", "v0.4.0")
             (root / versions.TOC).write_text("## Version: 0.5.0\n")
-            (root / "CHANGELOG.md").write_text("# Release notes\n\n## 0.5.0\n\nNew notes\n\n## 0.4.0\n\nOld\n")
             (root / "README.md").write_text("management only")
             (root / "release-plan.json").write_text(json.dumps({"base_tag": "v0.4.0", "version": "0.5.0",
                 "bump": "minor", "reason": "Reviewed feature", "content_sha256": "pending"}))
@@ -198,10 +197,12 @@ class ReleasePlanTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "changed shipped content"):
                     publication.release_plan("0.5.0", "alpha")
                 (root / "ForeverElixirManager/ForeverElixirManager.lua").write_text("new behavior")
+                (root / "CHANGELOG.md").write_text("# Release notes\n\n## 0.5.0\n\nNew notes\n\n## 0.4.0\n\nOld\n")
                 commit()
                 decision_path = root / "release-plan.json"
                 decision = json.loads(decision_path.read_text())
                 decision["content_sha256"] = versions.shipped_digest(versions.snapshot("HEAD")[2])
+                decision["publication_sha256"] = versions.publication_digest(versions.snapshot("HEAD")[2])
                 decision_path.write_text(json.dumps(decision))
                 commit()
                 result = publication.release_plan("0.5.0", "beta")

@@ -57,14 +57,14 @@ behavior is unverified.
 
 ## Automated validation
 
-The 0.5.1 candidate changes only the release display name and TOC version;
+The 0.5.2 candidate corrects links in the release notes shown on CurseForge;
 addon behavior and the client-validation requirements above are unchanged.
 
 Run from the repository root:
 
 ```text
 python scripts/validate.py
-python scripts/validate.py --tag v0.5.1
+python scripts/validate.py --tag v0.5.2
 python -m unittest discover -s tests -p "test_*.py"
 ```
 

@@ -1,8 +1,8 @@
 {
-  "base_tag": "v0.5.0",
-  "version": "0.5.1",
+  "base_tag": "v0.5.1",
+  "version": "0.5.2",
   "bump": "patch",
-  "reason": "Correct GitHub and CurseForge release display names with an owner-requested patch version. The complete shipped diff from v0.5.0 changes only the TOC version; addon behavior, settings and commands are unchanged.",
-  "version_only_approval": "Owner explicitly requested 'lav en version 0.5.1 i så fald' in the maintenance session after being told the name-only fix would otherwise retain 0.5.0. This authorizes preparing 0.5.1, not publication.",
-  "content_sha256": "a252b71aaffefe466c8a31957b12483fd1ac2ea15082fd33b7041822b2131b18"
+  "reason": "Correct externally visible CurseForge release-note navigation since v0.5.1. This is a compatible presentation fix; installed Lua, settings and commands are unchanged. GitHub-only policy and test changes are excluded from the release impact.",
+  "content_sha256": "a252b71aaffefe466c8a31957b12483fd1ac2ea15082fd33b7041822b2131b18",
+  "publication_sha256": "405a47e505debba925d2de0933573158def123c8a4d28f04cfca46161275ad97"
 }

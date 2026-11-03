@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.5.2
+
+- Make CurseForge release-note navigation clearer: link the version heading to its source and show Full Changelog and Previous Releases on separate lines.
+
+Addon behavior and saved settings are unchanged from 0.5.1. Live Forever compatibility remains NOT VERIFIED.
+
 ## 0.5.1
 
 - Use `ForeverElixirManager-v0.5.1` as the release display name, with the release type appended on GitHub.
