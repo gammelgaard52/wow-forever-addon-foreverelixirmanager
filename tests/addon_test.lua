@@ -109,7 +109,7 @@ test("fixed priority and optional toggles", function()
     w:command("disable 1"); equal(w:selected(), "item:250330")
     w:command("enable 1"); equal(w:selected(), "item:2458")
     w:command("list"); w:command("buffs"); w:command("status")
-    assert(table.concat(w.messages, "\n"):find("1. Elixir of Minor Fortitude [ON]", 1, true))
+    assert(table.concat(w.messages, "\n"):find("1. Fortitude [ON]", 1, true))
 end)
 
 test("client level requirements and level event", function()
@@ -208,6 +208,93 @@ test("missing secure API or unsupported event leaves action unarmed", function()
     w = world(nil,nil,{unsupportedEvent="UNIT_AURA"}); w:login(); equal(w.button,nil)
     w = world(); w.env.InCombatLockdown=false; w:login(); equal(w.button,nil)
 end)
+test("all six groups choose their strongest carried rank", function()
+    for _, pair in ipairs({{2458,250335},{250330,250333},{250339,250341},
+        {250344,250347},{3383,9179},{3389,13445}}) do
+        local w = world(); w.level = 60; w.bags[pair[1]], w.bags[pair[2]] = 1, 1
+        w:login(); equal(w:selected(), "item:" .. pair[2])
+    end
+end)
+
+test("rank fallback follows bag removals and client level limits", function()
+    local w = world(); w.level = 54
+    w.bags[250335], w.bags[250334], w.bags[3825], w.bags[2458] = 1, 1, 1, 1
+    w.minimum[250335], w.minimum[250334], w.minimum[3825], w.minimum[2458] = 55, 45, 25, 2
+    w:login(); equal(w:selected(), "item:250334")
+    w.bags[250334] = 0; w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), "item:3825")
+    w.level = 24; w:event("PLAYER_LEVEL_UP"); w:flush(); equal(w:selected(), "item:2458")
+    w.level = 55; w:event("PLAYER_LEVEL_UP"); w:flush(); equal(w:selected(), "item:250335")
+    w.bags[250335], w.bags[3825], w.bags[2458] = 0, 0, 0
+    w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), nil)
+end)
+
+test("recognized stronger buff blocks all lower ranks even without its item", function()
+    for _, entry in ipairs({{2458,"Elixir of Greater Fortitude"},
+        {250330,"Greater Cleric's Elixir"},{250339,"Greater Mageblood Elixir"},
+        {250344,"Elixir of Greater Spirit"},{3383,"Elixir of Greater Intellect"},
+        {3389,"Elixir of Greater Defense"}}) do
+        local w = world(); w.bags[entry[1]] = 1; w.auras = {{name=entry[2]}}
+        w:login(); equal(w:selected(), nil)
+    end
+end)
+
+test("weaker buff permits manual upgrade but equal buff prevents reuse", function()
+    local w = world(); w.bags[2458], w.bags[3825] = 1, 1
+    w.auras = {{name="Elixir of Minor Fortitude"}}
+    w:login(); equal(w:selected(), "item:3825")
+    w.auras = {{name="Elixir of Lesser Fortitude"}}
+    w:event("UNIT_AURA","player"); w:flush(); equal(w:selected(), nil)
+    w.auras = {}; w:event("UNIT_AURA","player"); w:flush(); equal(w:selected(), "item:3825")
+end)
+
+test("equal intellect effects neither replace each other nor hide upgrades", function()
+    local w = world(); w.bags[3383], w.bags[250353] = 1, 1
+    w:login(); equal(w:selected(), "item:3383")
+    w.bags[3383] = 0; w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), "item:250353")
+    w.auras = {{name="Elixir of Wisdom"}}
+    w:event("UNIT_AURA","player"); w:flush(); equal(w:selected(), nil)
+    w.bags[9179] = 1; w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), "item:9179")
+end)
+
+test("effect strength wins over item naming and required level", function()
+    local w = world(); w.level = 45
+    w.bags[9179], w.bags[250354], w.bags[3383] = 1, 1, 1
+    w.minimum[9179], w.minimum[250354] = 37, 45
+    w:login(); equal(w:selected(), "item:9179")
+    w.bags[9179] = 0; w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), "item:250354")
+end)
+
+test("existing disabled toggles cover every rank and survive reload", function()
+    local legacy = {[2458]=false}
+    local w = world(nil, legacy); w.bags[250335] = 1; w:login(); equal(w:selected(), nil)
+    w:command("enable 1"); equal(w:selected(), "item:250335")
+    w:command("disable 1"); equal(w:selected(), nil)
+    local reloaded = world(w.env.ForeverElixirManagerCharDB, legacy)
+    reloaded.bags[250335] = 1; reloaded:login(); equal(reloaded:selected(), nil)
+end)
+
+test("uncached stronger item falls back then upgrades after data arrives", function()
+    local w = world(); w.bags[250335], w.bags[2458] = 1, 1; w.uncached = 250335
+    w:login(); equal(w:selected(), "item:2458"); equal(w.requests[250335], 1)
+    w.uncached = nil; w:event("GET_ITEM_INFO_RECEIVED",250335,true); w:flush()
+    equal(w:selected(), "item:250335")
+end)
+
+test("rank changes pause in combat and resume without insecure combat writes", function()
+    local w = world(); w.bags[2458] = 1; w:login(); w:setCombat(true)
+    local writes, scans = w.writes, w.scans
+    w.bags[250335] = 1; w:event("BAG_UPDATE"); w:flush()
+    equal(w:selected(), "item:2458"); equal(w.button.attributes.type, nil)
+    equal(w.writes, writes); equal(w.scans, scans)
+    w:setCombat(false); equal(w:selected(), "item:250335")
+end)
+
+test("group order is retained when later groups have stronger ranks", function()
+    local w = world(); w.bags[2458], w.bags[250333] = 1, 1
+    w:login(); equal(w:selected(), "item:2458")
+    w:command("disable 1"); equal(w:selected(), "item:250333")
+end)
+
 for _, entry in ipairs(tests) do
     local ok, err = pcall(entry[2])
     if not ok then error("FAIL: " .. entry[1] .. ": " .. tostring(err)) end

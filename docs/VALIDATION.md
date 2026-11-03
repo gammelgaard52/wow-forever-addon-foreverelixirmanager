@@ -1,10 +1,11 @@
 # Assessment and validation
 
-Version 0.4.0 restores the 0.2.0 command set, fixed priority and English-name
-buff matching. It retains modern item APIs, level checks, per-character toggles,
-combat protection and packaging checks from 0.3.0. The original name matching is
-an explicit assumption, not confirmed client behavior. There is no mandatory
-aura mapping or conflict configuration.
+The 0.5.0 candidate adds strongest-eligible-rank selection within the six existing
+effect groups. It retains modern item APIs, level checks, per-character toggles,
+combat protection and English-name matching. The name matching remains an explicit
+assumption, not confirmed client behavior. See [rank evidence](ELIXIR_RANKS.md)
+for the 24 supported items, source builds, fallback and equal/stronger-effect policy.
+This candidate has not been published or tested in the game.
 
 ## API evidence and limits
 
@@ -43,7 +44,9 @@ Whether the engine permits its macro-triggered click remains NOT VERIFIED.
 
 ## Candidate data ledger
 
-All six IDs are retained as candidates, not a certified database. The names below
+The original six IDs below remain the saved group keys. See [the expanded rank
+ledger](ELIXIR_RANKS.md) for 0.5.0. This original ledger is historical; none of these
+entries are a certified live database. The names below
 are labels from the existing project and are also the assumed exact aura names.
 Required levels come from client item data.
 
@@ -61,13 +64,15 @@ and [Forever Mageblood entry](https://www.wowhead.com/forever/item=250339/minor-
 provided those two item-level observations. Other database requests were
 inaccessible or insufficient to establish aura/replacement rules. Old Classic
 comments and Classic database fields were not accepted as Forever verification.
-Even those two entries have no in-game PASS. Duration is not used for selection:
-an existing effect is retained until it actually disappears.
+Even those two entries have no in-game PASS. Remaining buff duration is not used
+for selection: a recognized equal/stronger effect is retained until it disappears;
+a stronger carried rank can be offered as a manual upgrade.
 
 The addon assumes each buff has exactly the English item label shown above,
 as in 0.2.0. This is NOT VERIFIED and may fail even on an English client. A
 localized item name is used for chat feedback, not as proof of an aura name.
-There is no Classic API fallback, spell-ID mapping or replacement filtering.
+There is no Classic API fallback or spell-ID mapping. Version 0.5.0 filters
+equal/stronger recognized effects within the documented groups.
 If `/fem buffs` shows an active effect as MISSING, disable that entry. Likewise,
 disable entries whose stronger/replacement interactions have not been checked.
 The simplified version can otherwise queue an unnecessary replacement.
@@ -78,7 +83,7 @@ Run from the repository root:
 
 ```text
 python scripts/validate.py
-python scripts/validate.py --tag v0.4.0
+python scripts/validate.py --tag v0.5.0
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
@@ -184,14 +189,15 @@ Use a clean addon profile first, then repeat relevant checks with normal addons.
    Check legacy disabled entries migrate without changing the account table.
    Upgrade from 0.3.0: toggles persist, while old priorities, mappings and blockers
    are ignored and remain stored for rollback.
-3. Confirm item IDs, localized names, required levels and durations for all six
-   candidates using the actual client. Record evidence in the ledger.
+3. Confirm item IDs, localized names, required levels and durations for the listed
+   ranks in all six groups using the actual client. Record evidence in the ledger.
 4. Manually use each item from a normal bag/action-bar slot in a controlled test.
    Compare `/fem buffs` before/after with the actual player buffs. Record the real
    aura name. Disable entries whose assumed name does not match.
 5. Test equal effects, higher ranks, relevant class buffs and other elixirs.
-   Record which replace, coexist or reject. There are no blocking rules: disable
-   entries with unwanted replacement behavior.
+   Record which replace, coexist or reject. Verify recognized equal/stronger ranks
+   prevent downgrades and weaker ranks allow manual upgrades. Disable groups with
+   unwanted replacement behavior or mismatched aura names.
 6. With a missing tracked effect and an available item, test the documented macro.
    Test ActionButtonUseKeyDown both enabled and disabled, repeated presses,
    modifiers and key holds. Exactly one manual activation may attempt one use.
