@@ -211,7 +211,7 @@ class ReleasePlanTests(unittest.TestCase):
                 self.assertIn("[0.5.0]", result["notes"])
                 self.assertIn("/tree/v0.5.0", result["notes"])
                 self.assertIn("/compare/v0.4.0...v0.5.0", result["notes"])
-                self.assertNotIn("Previous Releases", result["notes"])
+                self.assertIn(f"[Previous Releases]({publication.cf.REPOSITORY_URL}/releases)", result["notes"])
                 for version in ("v0.5.0", "0.6.0", "0.5.0;echo", "00.5.0"):
                     with self.assertRaises(ValueError):
                         publication.release_plan(version, "alpha")

@@ -27,9 +27,9 @@ class DistributionTests(unittest.TestCase):
             notes = cf.release_notes(source, "v0.5.0", "v0.4.0")
             self.assertTrue(notes.startswith(f"## [0.5.0]({cf.REPOSITORY_URL}/tree/v0.5.0)"))
             self.assertIn(f"[Full Changelog]({cf.REPOSITORY_URL}/compare/v0.4.0...v0.5.0)", notes)
-            self.assertNotIn("Previous Releases", notes)
+            self.assertIn(f"[Previous Releases]({cf.REPOSITORY_URL}/releases)", notes)
             self.assertIn("- Current fix", notes)
-            self.assertIn("v0.4.0...v0.5.0)\n\n- Current fix", notes)
+            self.assertIn(f"v0.4.0...v0.5.0)\n\n[Previous Releases]({cf.REPOSITORY_URL}/releases)\n\n- Current fix", notes)
             self.assertIn("### Details", notes)
             self.assertNotIn("Future", notes)
             self.assertNotIn("Older", notes)
@@ -160,7 +160,7 @@ class DistributionTests(unittest.TestCase):
             body = api.call_args.args[2]
             self.assertIn(b"[Full Changelog]", body)
             self.assertIn(f"/tree/v{validation.metadata()}".encode(), body)
-            self.assertNotIn(b"[Previous Releases]", body)
+            self.assertIn(f"[Previous Releases]({cf.REPOSITORY_URL}/releases)".encode(), body)
             self.assertNotIn(b"## 0.4.0", body)
 
     def test_token_header_and_no_redirect_policy(self):
