@@ -126,8 +126,10 @@ The pipeline pins the workflow commit, validates source/tests and the allowliste
 ZIP, then verifies the configured Forever catalog tuple before creating anything
 on GitHub. It creates the tag on that exact commit and publishes the selected
 version's release notes and ZIP. GitHub and CurseForge notes contain only that
-version's section, headed by a link to its tagged source, plus **Full Changelog**
-(previous release to current tag) and **Previous Releases** links for this addon.
+version's section, headed by its version number linking to that GitHub release,
+plus **Full Changelog** (previous release to current tag) for this addon.
+The main changes follow directly as concise bullet points, with any necessary
+compatibility or upgrade notes below them. Older version sections are excluded.
 It downloads the GitHub asset and compares bytes before submitting to CurseForge.
 `isMarkedForManualRelease=false` requests automatic
 publication once CurseForge approves the file; an upload response is still not
