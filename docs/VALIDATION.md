@@ -110,6 +110,12 @@ Local development results (2 November 2026):
 GitHub Actions results are reported on the pull request. Release/upload workflows
 must not be executed merely to test publication.
 
+Update, 3 November 2026: local validation passes 18 mocked Lua scenarios and
+12 Python distribution tests. The authenticated CurseForge catalog check is now
+PASS; see [the recorded run and configuration](CURSEFORGE.md). The older table
+above records the 2 November state. Project upload permission, actual automated
+upload and all live-client results remain NOT VERIFIED.
+
 ## In-game checklist - all NOT VERIFIED until a tester records results
 
 Record date, locale, exact GetBuildInfo() output and PASS / FAIL for each step.

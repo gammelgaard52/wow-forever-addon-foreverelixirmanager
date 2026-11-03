@@ -8,12 +8,16 @@ Maintain the **ForeverElixirManager** World of Warcraft: Forever addon. This rep
 - Commit directly to `main` only when explicitly requested.
 - Preserve unrelated edits; do not merge a PR, publish to CurseForge, or deploy an addon without instruction.
 - Tags `vX.Y.Z` initiate GitHub release packaging. Do not create a release tag without approval.
+- Addon versions describe changes to the installed addon. Management-only changes (workflows, scripts, tests, documentation, agent instructions, issue templates and unshipped artwork) must not bump the TOC version, add an addon release-note section, create a release tag or publish a new addon package.
+- CI may rebuild and validate the existing version without releasing it. Future version automation must compare shipped content and require an explicitly reviewed release decision; commit types or merges alone must not trigger a version bump. See `docs/IMPROVEMENTS.md` for the version policy and issue priorities.
 
 ## Before changes
 1. Read this file, README, TOC, Lua source, and relevant workflow files.
 2. Review the current branch and diffs; prefer minimal changes.
 3. Verify spell/item IDs, aura names and client API behavior from Forever sources or label assumptions clearly.
 4. Respect protected-action restrictions: no automated item use, combat decisions, input broadcasting or attempts to circumvent secure execution.
+5. Before changing client behavior, record the relevant Forever source/build and distinguish source evidence, observed client behavior and assumptions. If evidence is missing, keep the uncertainty visible rather than inventing compatibility. Management-only changes do not require unrelated client research.
+6. Implement only the requested behavior with the simplest adequate code. Prefer the existing lightweight approach; add abstractions, dependencies or configuration only for a demonstrated need.
 
 ## Validation
 - Review the full patch and run syntax/static checks where tooling exists.

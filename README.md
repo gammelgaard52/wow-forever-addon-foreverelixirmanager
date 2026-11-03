@@ -70,6 +70,9 @@ it cannot verify actual secure clicks or client behavior.
 
 GitHub releases require explicitly approved version tags. CurseForge publishing
 is separate; see [publishing setup](docs/CURSEFORGE.md).
+Changes to CI, tests, scripts, documentation or repository management do not bump
+the addon version or publish a release. See the
+[version policy and issue priorities](docs/IMPROVEMENTS.md).
 
 ## Rollback
 
