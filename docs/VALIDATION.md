@@ -117,7 +117,8 @@ above records the 2 November state. Project upload permission, actual automated
 upload and all live-client results were still NOT VERIFIED at that point.
 Later on 3 November, the approved Alpha upload returned file 9426340; see
 [the upload evidence](CURSEFORGE.md). This verifies submission only. All live-client
-results remain NOT VERIFIED and the optional emulator results below are unchanged.
+results remain NOT VERIFIED. The emulator investigation below records a later fix
+to the test's frame scheduling, without changing the released addon.
 
 ## wowlua experiment (issue #4)
 
@@ -132,20 +133,30 @@ The [framework's testing guide](https://github.com/DomenikIrrgang/wowlua/blob/v0
 documents the camelot emulator and optional Blizzard UI. Without that UI,
 RegisterStateDriver is unavailable in this experiment and the addon correctly
 leaves the queue disabled. With `test.blizzard-ui=true`, wowlua fetched UI source
-revision `172a387e3ab8` and produced these results using synthetic item data:
+revision `172a387e3ab8`. The first run passed startup/commands but failed bag and
+combat probes: those tests used `mock.advanceTime(1)`, which runs timers without
+running frame `OnUpdate` handlers. Both the addon's coalesced bag refresh and the
+Blizzard state driver require a frame. This distinction is visible in the pinned
+[engine clock implementation](https://github.com/DomenikIrrgang/wowlua/blob/v0.13.8/crates/wowlua-engine/src/clock.rs)
+(`advance` versus `advance_frames`). A standalone clock control reproduces it.
+
+After using `mock.nextFrame()` for frame-driven behavior, the same addon and UI
+revision produce these results using synthetic item data:
 
 | Probe | Result |
 |---|---|
 | Startup creates the secure button | PASS |
 | Commands change per-character on/off settings | PASS |
-| Bag event queues an item after advancing virtual time | FAIL: item stayed nil |
-| Combat state driver clears a manually prepared action | FAIL: type stayed item |
+| Bag events queue and remove an item on the next frame | PASS |
+| Combat disables action, freezes selection, then refreshes on exit | PASS |
+| Independent clock/timer versus frame control | PASS |
 
-The failures are unresolved differences between the emulator execution and our
-mocked expectations. They do not establish which behavior the actual client has.
-Do not patch the addon merely to accommodate an emulator, or claim that the
-passing probes validate secure clicks. The original 18 Lua scenarios remain the
-required regression suite; this new experiment is non-gating and #4 stays open.
+The original failures were test-driver errors, not established addon bugs. No
+addon code or secure restrictions were changed. These probes add coverage using
+Blizzard UI rather than our own state-driver mock; they still do not validate
+actual secure clicks or real item/aura data. Keep the existing Lua/Python suite
+as required CI. Keep this supplementary suite optional: it downloads external UI
+source and uses an emulator, so it must not certify compatibility or publication.
 
 Reproduce with the reviewed binary (not installed by this repository):
 
@@ -156,15 +167,14 @@ python scripts/probe_wowlua.py --binary /path/to/wowlua
 The runner requires exactly 0.13.8, creates a disposable addon copy, enables the
 Blizzard UI and runs `tests/wowlua/*.test.wowlua`. UI data is cached under ignored
 `dist/wowlua-cache`; later runs can add `--offline`. It returns the real failing
-exit status (currently 2 passed / 2 failed). Tests run in separate emulator worlds
-so one combat failure does not contaminate the startup/command probes.
+exit status (currently 5 passed / 0 failed). Tests run in separate emulator worlds
+so combat and clock controls do not contaminate other probes.
 
 WoWUnit was also reviewed from its
 [maintainer README](https://github.com/Jaliborc/WoWUnit/blob/master/README.md).
 It runs in the game and does not supply the unavailable Forever client. It has
-not been installed or claimed as compatible. Next for #4: isolate the event and
-state-driver discrepancies against framework evidence and, when available, the
-actual client before deciding whether to adopt an emulator CI job.
+not been installed or claimed as compatible. This completes the framework
+evaluation in #4; real-client testing remains on the separate checklist below.
 
 ## Alpha distribution decision
 

@@ -80,8 +80,15 @@ changes get a proposal; packaging changes require ZIP review. Nothing is written
 or released by this check. Locally: `python scripts/version_plan.py --base origin/main`.
 Use `--bump minor` or `--bump major` when reviewing features or breaking changes.
 
+For reviewed release preparation, `scripts/prepare_release.py` can update the TOC
+and prepend supplied release notes on a clean branch. It compares against the
+latest release tag, defaults to a preview, and never commits, tags or uploads.
+Management-only changes do not write a new version. See the
+[preparation commands](docs/IMPROVEMENTS.md#reviewed-release-preparation).
+
 An optional [wowlua experiment](docs/VALIDATION.md#wowlua-experiment-issue-4)
-reproduces unresolved emulator discrepancies. It is separate from required CI.
+checks startup, commands, bag refresh and combat transitions against Blizzard UI.
+It is separate from required CI and cannot establish live-client compatibility.
 
 ## Forever version monitoring
 
