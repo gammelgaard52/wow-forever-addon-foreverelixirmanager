@@ -1,12 +1,16 @@
 # Assessment and validation
 
-The 0.6.0 local candidate retains strongest-eligible-rank selection within the six
+Version 0.6.0 retains strongest-eligible-rank selection within the six
 existing groups and discovers additional elixirs and scrolls from client item
 categories. It retains level checks, per-character toggles and combat protection.
 Name matching remains an explicit assumption, not confirmed client behavior.
 See [rank and discovery evidence](ELIXIR_RANKS.md) for the original 24 items,
 new category policy, source builds, fallback and equal/stronger-effect policy.
-Live-client behavior remains NOT VERIFIED.
+On 6 November 2026 the owner reported that the local 0.6.0 test now works and
+requested release to CurseForge. **PASS (owner-reported):** basic local use after
+the discovery change. No exact build, locale or individual checklist results were
+provided; the complete item/aura, scroll-targeting and combat matrix remains
+**NOT VERIFIED**. Do not infer those individual results from the general report.
 
 ## API evidence and limits
 
@@ -61,8 +65,9 @@ behavior is unverified.
 
 ## Automated validation
 
-The 0.6.0 candidate also includes the previously prepared CurseForge release-note
-navigation correction. Only a local ZIP is prepared; no publication is authorized.
+The owner requested merge and publication of 0.6.0 on 6 November 2026 following the
+local test. Publication uses the existing manual release workflow. The previous
+release is v0.5.2; its release-note navigation fix is already published.
 
 Run from the repository root:
 

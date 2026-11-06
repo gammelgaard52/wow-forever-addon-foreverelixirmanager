@@ -1,8 +1,8 @@
 {
-  "base_tag": "v0.5.1",
+  "base_tag": "v0.5.2",
   "version": "0.6.0",
   "bump": "minor",
-  "reason": "Compatible feature: discover all carried client-classified elixirs and scrolls, add two enabled-by-default category toggles and self-target scroll use while preserving the original six groups, saved settings, commands and combat restrictions. Complete addon/publication review since v0.5.1 also includes the compatible CurseForge release-note navigation correction; minor is the highest impact. Packaging code is unchanged. This is a local test candidate only; no publication or external CurseForge edits are performed.",
+  "reason": "Compatible feature since v0.5.2: discover all carried client-classified elixirs and scrolls, add two enabled-by-default category toggles, self-target scroll use and expose discovered items/buff-name assumptions. Original six groups, saved settings, commands and combat restrictions are preserved. Full addon/publication diff reviewed: only Lua, TOC notes/version and release notes affect distribution; packaging/publication code is unchanged. Minor is the highest impact and the prepared 0.6.0 version is retained. Owner reports successful local use and explicitly requests merge and Release publication to CurseForge.",
   "content_sha256": "366f5a8694eb886de19ea64867469131c0bdccb1228c06ad01cc42034e836a24",
-  "publication_sha256": "8c35fdba23ba95cdeb0abca921f8a0721a413926992c5ea9b9b4c06560ad8b79"
+  "publication_sha256": "a56a853d8f74879f41fe04a5530c6d7cabf1933856fbb1131e789bddbd167ab8"
 }

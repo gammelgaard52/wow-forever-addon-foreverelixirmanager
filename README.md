@@ -10,10 +10,11 @@ This includes Elixir of Minor Strength and new item IDs without a fixed allowlis
 Press your macro to use the next eligible item on yourself. Nothing is consumed
 automatically, and selection pauses in combat. Enable or disable groups if needed.
 
-**Experimental 0.6.0 local test candidate**, retaining Forever interface **16001**.
+**Version 0.6.0**, retaining Forever interface **16001**.
 Buff recognition uses assumed names: English item names for the original groups,
 and client item/use-spell names for discovered items. If an active buff is shown as
-missing, disable that group. Live client compatibility remains **NOT VERIFIED**;
+missing, disable that group. The owner reports the local test works (6 November
+2026); the full live-client validation checklist remains **NOT VERIFIED**;
 see [validation and limitations](docs/VALIDATION.md).
 
 ## Installation and macro
@@ -35,7 +36,7 @@ No aura-ID setup is needed. Outside combat, `/fem status` shows the next item;
 press the macro once to attempt one use. The macro has no dynamic item tooltip.
 If the client rejects the click, use the normal item action bar.
 
-For the local test build, extract `dist/ForeverElixirManager-0.6.0.zip` into
+For a locally built package, extract `dist/ForeverElixirManager-0.6.0.zip` into
 `Interface/AddOns/`, replacing the previous addon folder while the client is closed.
 The macro above is unchanged. With Elixir of Minor Strength in your bags, run
 `/fem list` and `/fem status` outside combat, press the macro, then run `/fem buffs`.

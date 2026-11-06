@@ -29,7 +29,7 @@ recognized active effect blocks the other. Combined-stat elixirs, class buffs,
 flasks, stacking and unnamed/new ranks are outside this six-group rank policy.
 Additional elixirs and scrolls use the discovery policy below.
 
-## Bag discovery in the 0.6.0 local test candidate
+## Bag discovery in 0.6.0
 
 Reviewed on 6 November 2026 before implementation. API source evidence is the
 retained Forever UI snapshot
@@ -58,8 +58,9 @@ Concrete client-derived examples:
 | 954 Scroll of Strength | [ForeverDB client observations](https://foreverdb.net/item/954): Scroll, required level 10, +5 Strength to target | Strength; not a verified resulting aura |
 
 Observed locally: the user carried Elixir of Minor Strength and the old macro did
-nothing; the old allowlist excludes it. Successful consumption, actual aura names
-and the installed build have not yet been observed for 0.6.0.
+nothing; the old allowlist excludes it. On 6 November 2026 the owner reported the
+local 0.6.0 test now works. Actual aura names, installed build and individual
+checklist outcomes were not supplied; see the limited result in VALIDATION.md.
 
 Discovery covers every carried item that the client classifies as an elixir or a
 scroll, once its name, required level and use-spell name are readable. It is not a
