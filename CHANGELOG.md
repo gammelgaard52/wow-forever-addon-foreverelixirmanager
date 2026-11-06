@@ -5,8 +5,8 @@
 - Discover all carried items classified by the client as elixirs or scrolls, including Elixir of Minor Strength, with new Other elixirs and Scrolls on/off groups.
 - Aim scrolls at your own character and skip discovered items with an active matching item or use-spell name.
 - Show discovered items and their assumed buff names through `/fem list` and `/fem buffs`, keeping the original six groups and saved choices.
-New categories are
-enabled by default and use item-ID order, without inferred rank strength or stacking
+
+New categories are enabled by default and use item-ID order, without inferred rank strength or stacking
 rules. The owner reports a successful local test on 6 November 2026. The full
 buff-name, scroll-targeting and combat validation checklist remains NOT VERIFIED.
 
