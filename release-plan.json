@@ -1,8 +1,8 @@
 {
   "base_tag": "v0.5.1",
-  "version": "0.5.2",
-  "bump": "patch",
-  "reason": "Correct externally visible CurseForge release-note navigation since v0.5.1. This is a compatible presentation fix; installed Lua, settings and commands are unchanged. GitHub-only policy and test changes are excluded from the release impact.",
-  "content_sha256": "a252b71aaffefe466c8a31957b12483fd1ac2ea15082fd33b7041822b2131b18",
-  "publication_sha256": "405a47e505debba925d2de0933573158def123c8a4d28f04cfca46161275ad97"
+  "version": "0.6.0",
+  "bump": "minor",
+  "reason": "Compatible feature: discover all carried client-classified elixirs and scrolls, add two enabled-by-default category toggles and self-target scroll use while preserving the original six groups, saved settings, commands and combat restrictions. Complete addon/publication review since v0.5.1 also includes the compatible CurseForge release-note navigation correction; minor is the highest impact. Packaging code is unchanged. This is a local test candidate only; no publication or external CurseForge edits are performed.",
+  "content_sha256": "366f5a8694eb886de19ea64867469131c0bdccb1228c06ad01cc42034e836a24",
+  "publication_sha256": "8c35fdba23ba95cdeb0abca921f8a0721a413926992c5ea9b9b4c06560ad8b79"
 }

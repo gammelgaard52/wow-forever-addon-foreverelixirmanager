@@ -1,5 +1,16 @@
 # Release notes
 
+## 0.6.0
+
+- Discover all carried items classified by the client as elixirs or scrolls, including Elixir of Minor Strength, with new Other elixirs and Scrolls on/off groups.
+- Aim scrolls at your own character and skip discovered items with an active matching item or use-spell name.
+- Show discovered items and their assumed buff names through `/fem list` and `/fem buffs`, keeping the original six groups and saved choices.
+- Make CurseForge release-note navigation clearer: link the version heading to its source and show Full Changelog and Previous Releases on separate lines.
+
+Local test candidate. New categories are
+enabled by default and use item-ID order, without inferred rank strength or stacking
+rules. Buff names, secure clicks and live Forever compatibility remain NOT VERIFIED.
+
 ## 0.5.2
 
 - Make CurseForge release-note navigation clearer: link the version heading to its source and show Full Changelog and Previous Releases on separate lines.

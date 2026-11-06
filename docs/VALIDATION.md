@@ -1,10 +1,11 @@
 # Assessment and validation
 
-The 0.5.0 candidate adds strongest-eligible-rank selection within the six existing
-effect groups. It retains modern item APIs, level checks, per-character toggles,
-combat protection and English-name matching. The name matching remains an explicit
-assumption, not confirmed client behavior. See [rank evidence](ELIXIR_RANKS.md)
-for the 24 supported items, source builds, fallback and equal/stronger-effect policy.
+The 0.6.0 local candidate retains strongest-eligible-rank selection within the six
+existing groups and discovers additional elixirs and scrolls from client item
+categories. It retains level checks, per-character toggles and combat protection.
+Name matching remains an explicit assumption, not confirmed client behavior.
+See [rank and discovery evidence](ELIXIR_RANKS.md) for the original 24 items,
+new category policy, source builds, fallback and equal/stronger-effect policy.
 Live-client behavior remains NOT VERIFIED.
 
 ## API evidence and limits
@@ -48,23 +49,26 @@ The maintained [rank ledger](ELIXIR_RANKS.md) records all supported items and th
 Forever sources. Required levels come from client item data. Each group's original
 item ID remains its saved setting key.
 
-Aura recognition assumes the exact English item labels in that ledger. Localized
-item names and use-spell names do not establish the resulting aura names. There is
-no Classic API fallback or spell-ID mapping. Equal/stronger recognized effects
+Aura recognition for the original groups assumes the exact English item labels in
+that ledger. Discovered items instead assume the client's item/use-spell names;
+these do not establish the resulting aura names. There is no Classic API fallback
+or spell-ID mapping. Within the six ranked groups, equal/stronger recognized effects
 prevent downgrades; a stronger carried rank may be offered as a manual upgrade.
+New categories use ascending item ID, not inferred strength, and any matching aura
+blocks reuse. Cross-category stacking and buff replacement remain unverified.
 Disable a group if `/fem buffs` misidentifies its active effect or its replacement
 behavior is unverified.
 
 ## Automated validation
 
-The 0.5.2 candidate corrects links in the release notes shown on CurseForge;
-addon behavior and the client-validation requirements above are unchanged.
+The 0.6.0 candidate also includes the previously prepared CurseForge release-note
+navigation correction. Only a local ZIP is prepared; no publication is authorized.
 
 Run from the repository root:
 
 ```text
 python scripts/validate.py
-python scripts/validate.py --tag v0.5.2
+python scripts/validate.py --tag v0.6.0
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
@@ -76,6 +80,11 @@ The Lua harness covers missing/present buffs and items, priorities, level change
 fixed-order toggles, bag/aura events, combat, secure attribute updates, startup,
 per-character persistence/migration, ignored legacy configuration, invalid/missing
 APIs, secret-value rejection, item-cache completion and event coalescing.
+Discovery tests include the reported Minor Strength regression, arbitrary new IDs
+in both categories, unrelated-category exclusion, player targeting, localized
+use-spell-name matching, duplicate stacks, bank exclusion, cache failures, stable
+ordering and preservation of old choices. They test assumptions with synthetic
+data; they do not establish actual item classification or aura identity in-game.
 Secure state snippets are executed in a mock, not a real protected environment.
 Python validates exact TOC entries, metadata, tag/version agreement and actual ZIP
 members/bytes. The package is an allowlist with one ForeverElixirManager/ root;
@@ -147,6 +156,14 @@ Use a clean addon profile first, then repeat relevant checks with normal addons.
     without committing personal logs. Confirm no automatic consumption, chat
     flooding or persistent OnUpdate handler.
 12. Install the produced ZIP in a clean AddOns directory and test rollback.
+13. Carry Elixir of Minor Strength: verify `/fem list` discovers it and `/fem status`
+    queues it when eligible. Use it once; `/fem buffs` must then report ACTIVE and
+    the queue must move on. Record the actual aura name if it does not.
+14. Repeat with each carried elixir/scroll category, especially a stat scroll while
+    another friendly or hostile unit is targeted. The scroll must buff the player.
+    Test new category toggles 7/8, multiple ranks and other buffs; do not assume
+    replacement protection for effects with different names. Verify potions,
+    flasks, recipes and quest scrolls outside these categories are not queued.
 
 Until these pass, the addon remains experimental. CI cannot certify item data,
 stacking, engine timing, secret restrictions or secure execution.

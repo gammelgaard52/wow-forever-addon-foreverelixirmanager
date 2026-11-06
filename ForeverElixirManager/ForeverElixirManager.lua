@@ -1,5 +1,5 @@
 -- Copyright (c) 2026 Martin Gammelgård Rasmussen. MIT; see packaged LICENSE.
--- Forever rank evidence and English buff-name assumptions: docs/ELIXIR_RANKS.md.
+-- Forever API evidence and buff-name assumptions: docs/ELIXIR_RANKS.md.
 local PREFIX = "|cff8bcaff[ElixirManager]|r "
 local elixirs = {
     -- Group IDs preserve existing saved toggles. Ranks are strongest first.
@@ -40,10 +40,16 @@ local elixirs = {
         { id = 3389, name = "Elixir of Lesser Defense", strength = 150 },
         { id = 5997, name = "Elixir of Minor Defense", strength = 50 },
     } },
+    { id = "otherElixirs", name = "Other elixirs", ranks = {} },
+    { id = "scrolls", name = "Scrolls", ranks = {} },
 }
+local rankedItems = {}
+for _, group in ipairs(elixirs) do
+    for _, entry in ipairs(group.ranks) do rankedItems[entry.id] = true end
+end
 local frame = CreateFrame("Frame")
 local button, settings, queuedID, lastMessage, startupError
-local pendingItems = {}
+local pendingItems, carriedItems = {}, {}
 local function say(message) print(PREFIX .. message) end
 local function report(message)
     if message ~= lastMessage then say(message); lastMessage = message end
@@ -82,16 +88,72 @@ local function activeStrength(group, active)
     end
     return strength
 end
+local function requestItem(id)
+    if not pendingItems[id] and type(C_Item.RequestLoadItemDataByID) == "function" then
+        pendingItems[id] = true
+        C_Item.RequestLoadItemDataByID(id)
+    end
+end
+local function textValue(value)
+    return readable(value) and type(value) == "string" and value ~= ""
+end
+local function discoverItems()
+    carriedItems = {}
+    if not C_Container or type(C_Container.GetContainerNumSlots) ~= "function"
+        or type(C_Container.GetContainerItemID) ~= "function"
+        or type(C_Item.GetItemSpell) ~= "function" or not integer(NUM_BAG_SLOTS, 0) then
+        return "Bag discovery API unavailable; additional elixirs/scrolls not scanned."
+    end
+    local seen, incomplete = {}, false
+    -- Backpack and equipped bags only. Never inspect bank containers.
+    for bag = 0, NUM_BAG_SLOTS do
+        local slots = C_Container.GetContainerNumSlots(bag)
+        if not integer(slots, 0) then error("Unreadable bag size") end
+        for slot = 1, slots do
+            local id = C_Container.GetContainerItemID(bag, slot)
+            if not readable(id) or (id ~= nil and not integer(id, 1)) then error("Unreadable bag item") end
+            if id and not seen[id] and not rankedItems[id] then
+                seen[id] = true
+                if pendingItems[id] ~= "failed" then
+                    local name, _, _, _, minimum, _, _, _, _, _, _, class, subclass = C_Item.GetItemInfo(id)
+                    if not textValue(name) or not integer(minimum, 0)
+                        or not integer(class, 0) or not integer(subclass, 0) then
+                        requestItem(id)
+                        incomplete = true
+                    -- Forever UI enum: Consumable=0, Elixir=2, Scroll=4.
+                    elseif class == 0 and (subclass == 2 or subclass == 4) then
+                        local spell = C_Item.GetItemSpell(id)
+                        if textValue(spell) then
+                            carriedItems[#carriedItems + 1] = { id = id, name = name,
+                                minimum = minimum, spell = spell,
+                                group = subclass == 2 and "otherElixirs" or "scrolls" }
+                        else
+                            requestItem(id)
+                            incomplete = true
+                        end
+                    end
+                else
+                    incomplete = true
+                end
+            end
+        end
+    end
+    -- Stable order across bag moves. Unknown effects are not ranked by item level.
+    table.sort(carriedItems, function(a, b) return a.id < b.id end)
+    if incomplete then return "Some bag item data unavailable; discovery incomplete." end
+end
+local function discoveredActive(entry, active)
+    -- Use-spell NAME is a testable heuristic, not proof of a matching aura ID.
+    -- Any matching aura blocks reuse; do not infer an upgrade from item level.
+    return active[entry.name] or active[entry.spell]
+end
 local function candidate(entry, level)
     local id = entry.id
     local count = C_Item.GetItemCount(id, false, false, false, false)
     if not integer(count, 1) or pendingItems[id] == "failed" then return end
     local name, _, _, _, minimum = C_Item.GetItemInfo(id)
     if not readable(name) or type(name) ~= "string" or not integer(minimum, 0) then
-        if not pendingItems[id] and type(C_Item.RequestLoadItemDataByID) == "function" then
-            pendingItems[id] = true
-            C_Item.RequestLoadItemDataByID(id)
-        end
+        requestItem(id)
         return
     end
     if level >= minimum then return name end
@@ -103,6 +165,7 @@ local function selectItem()
     if not integer(level, 1) then return nil, "Player level unavailable." end
     local active, detail = activeAuras()
     if not active then return nil, detail end
+    local discoveryWarning = discoverItems()
     for _, group in ipairs(elixirs) do
         if settings[group.id] ~= false then
             local strength = activeStrength(group, active)
@@ -113,9 +176,16 @@ local function selectItem()
                     if name then return entry.id, "Next up: " .. name end
                 end
             end
+            for _, entry in ipairs(carriedItems) do
+                if entry.group == group.id and level >= entry.minimum
+                    and not discoveredActive(entry, active) then
+                    local name = candidate(entry, level)
+                    if name then return entry.id, "Next up: " .. name end
+                end
+            end
         end
     end
-    return nil, "No missing enabled elixir available for your level."
+    return nil, discoveryWarning or "No missing enabled elixir/scroll available for your level."
 end
 local function applySelection(id)
     if queuedID == id then return end
@@ -153,6 +223,7 @@ local function initializeButton()
     button:SetAlpha(0)
     button:RegisterForClicks("AnyUp")
     button:SetAttribute("useOnKeyDown", false)
+    button:SetAttribute("unit", "player") -- Scrolls must buff the player, not the current target.
     -- Fixed combat condition only: no item selection or combat decisions here.
     button:SetAttribute("_onstate-combat", [[
         if newstate == "combat" then
@@ -219,12 +290,25 @@ SlashCmdList.FOREVERELIXIR = function(arg)
         for index, item in ipairs(elixirs) do
             say(index .. ". " .. item.name .. " [" .. (settings[item.id] == false and "OFF" or "ON") .. "]")
         end
+        if not locked() then update() end
+        for _, item in ipairs(carriedItems) do
+            say(item.name .. " (item " .. item.id .. ", " .. item.group .. ")")
+        end
     elseif arg == "buffs" then
         if locked() then say("Aura inspection unavailable in combat."); return end
         local ok, active = pcall(activeAuras)
         if not ok or not active then say("Aura data unavailable."); return end
         for _, item in ipairs(elixirs) do
-            say(item.name .. ": " .. (activeStrength(item, active) > 0 and "ACTIVE" or "MISSING"))
+            if #item.ranks > 0 then
+                say(item.name .. ": " .. (activeStrength(item, active) > 0 and "ACTIVE" or "MISSING"))
+            end
+        end
+        local discovered, warning = pcall(discoverItems)
+        if not discovered then say("Bag data unavailable."); return end
+        if warning then say(warning) end
+        for _, item in ipairs(carriedItems) do
+            say(item.name .. ": " .. (discoveredActive(item, active) and "ACTIVE" or "MISSING")
+                .. " (assumed buff: " .. item.spell .. ")")
         end
     elseif (command == "enable" or command == "disable") and entry then
         if locked() then say("Configuration unavailable in combat."); return end

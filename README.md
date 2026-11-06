@@ -1,17 +1,19 @@
 # ForeverElixirManager
 
-**One macro for your next missing elixir in World of Warcraft: Forever.**
+**One macro for your next missing elixir or scroll in World of Warcraft: Forever.**
 
 ![ForeverElixirManager artwork](assets/logo.jpg)
 
-The addon checks six effect groups in a fixed order and prepares the strongest
-listed elixir you carry and meet the level requirement for.
-Press your macro to use it. Nothing is consumed automatically, and selection
-pauses in combat. Enable or disable effect groups if needed.
+The addon checks six ranked effect groups first, then discovers additional elixirs
+and scrolls directly from your bags using the client's consumable categories.
+This includes Elixir of Minor Strength and new item IDs without a fixed allowlist.
+Press your macro to use the next eligible item on yourself. Nothing is consumed
+automatically, and selection pauses in combat. Enable or disable groups if needed.
 
-**Experimental 0.5.2 candidate**, targeting Forever beta interface **16001**. The original
-English buff names are assumed, not verified. If an active buff is shown as
-missing, disable that entry. Live client compatibility remains **NOT VERIFIED**;
+**Experimental 0.6.0 local test candidate**, retaining Forever interface **16001**.
+Buff recognition uses assumed names: English item names for the original groups,
+and client item/use-spell names for discovered items. If an active buff is shown as
+missing, disable that group. Live client compatibility remains **NOT VERIFIED**;
 see [validation and limitations](docs/VALIDATION.md).
 
 ## Installation and macro
@@ -29,39 +31,63 @@ Create a macro, place it on your action bar and bind a key:
 /click ForeverElixirSecureBtn LeftButton 0
 ```
 
-No aura-ID setup is needed. Outside combat, `/fem status` shows the next elixir;
+No aura-ID setup is needed. Outside combat, `/fem status` shows the next item;
 press the macro once to attempt one use. The macro has no dynamic item tooltip.
 If the client rejects the click, use the normal item action bar.
+
+For the local test build, extract `dist/ForeverElixirManager-0.6.0.zip` into
+`Interface/AddOns/`, replacing the previous addon folder while the client is closed.
+The macro above is unchanged. With Elixir of Minor Strength in your bags, run
+`/fem list` and `/fem status` outside combat, press the macro, then run `/fem buffs`.
+Confirm that one item is used and its buff is recognized before pressing again.
+Repeat with a stat scroll while targeting another unit: the scroll should buff you.
+If it fails, report the exact status/buffs output, item name and client build.
 
 ## Commands
 
 | Command | Effect |
 |---|---|
 | `/fem` | Refresh and show help |
-| `/fem list` | Show the six effect groups and on/off choices |
+| `/fem list` | Show eight group choices and discovered bag items (cached in combat) |
 | `/fem enable N` / `/fem disable N` | Turn effect group N on or off, including all ranks |
 | `/fem buffs` | Show tracked buffs as active or missing |
-| `/fem status` | Show the next elixir |
+| `/fem status` | Show the next item or an unavailable-data diagnostic |
 
 The fixed group order is: **1** Fortitude, **2** Cleric's,
-**3** Mageblood, **4** Spirit, **5** Intellect, **6** Defense.
+**3** Mageblood, **4** Spirit, **5** Intellect, **6** Defense,
+**7** Other elixirs, **8** Scrolls.
 For example, `/fem disable 2` skips every Cleric's rank. Choices are saved per
 character; configuration changes are unavailable in combat. Existing disabled
 choices also disable higher ranks when upgrading from 0.4.0.
 
-Within each group, unavailable or over-level ranks fall back to the next eligible
+Within the original six groups, unavailable or over-level ranks fall back to the next eligible
 rank. A recognized equal/stronger active buff blocks weaker replacements; a weaker
 buff allows a manual upgrade. Strength follows the listed effect, not item level.
 See the [supported ranks and evidence](docs/ELIXIR_RANKS.md).
 
+Groups 7 and 8 are enabled by default, including on upgrades. They cover all carried
+items classified by the client as Consumable/Elixir or Consumable/Scroll, with
+readable item data and a use-spell name. They use ascending item ID order, not a
+strength ranking. Any active matching item/use-spell name prevents reuse, including
+other ranks sharing that name; automatic rank upgrades are not inferred for these
+items. `/fem disable 7` or `/fem disable 8` skips the corresponding category.
+The original group choices still apply to their items, which cannot reappear in 7.
+
 ## Limitations and upgrades
 
-Buff detection uses English item labels as exact buff names. Different aura names,
-other locales, unlisted ranks, class buffs and combined-stat effects are not handled.
-Disable affected groups with `/fem disable N`. Item IDs and stacking also need
-in-game verification. Unavailable client data or insufficient level prevents an
-item from being queued; cooldowns and other use restrictions remain the client's
-responsibility. After an item-data load failure, reload once data is available.
+Item categories establish discovery, not verified buff behavior. Use-spell names
+can differ from the resulting buff; they are a heuristic, not an aura-ID mapping.
+The original six groups still assume English item labels. Cross-item stacking,
+class buffs, combined effects and different names for ranks are not resolved.
+Groups 7/8 do not guarantee the strongest item or prevent replacement of an
+unrecognized buff. Disable affected groups with `/fem disable N`.
+
+Flasks, potions, recipes, enchantments and quest items in other client categories
+are excluded, even if their names contain "elixir" or "scroll". Discovery covers
+the backpack and equipped bags, not the bank. Missing item/use-spell data or
+insufficient level prevents selection; cooldowns and other restrictions remain
+the client's responsibility. After an item-data load failure, reload once data
+is available. `/fem buffs` shows the assumed use-spell names for discovered items.
 
 Upgrading from 0.3.0 or 0.4.0 keeps on/off choices. Custom priorities, aura mappings and
 blockers are no longer used; their saved data is retained for rollback. Older
