@@ -1,6 +1,7 @@
 # Elixir rank evidence and selection
 
-Rank selection covers six effect groups. The source observations below were
+Rank selection covers six effect groups; 0.6.0 additionally discovers elixirs and
+scrolls outside this ranked list from the player's bags. The rank observations below were
 reviewed on 3 November 2026; live-client compatibility remains unverified.
 
 ## Selection contract
@@ -25,7 +26,64 @@ For example the retrieved Forever records give Greater Intellect +25 at level 37
 and Intellect +10 at level 45. Wisdom and Lesser Intellect both give +6; prefer
 Wisdom when both are available because its listed duration is longer. Either
 recognized active effect blocks the other. Combined-stat elixirs, class buffs,
-flasks, stacking and unnamed/new ranks are outside this six-group policy.
+flasks, stacking and unnamed/new ranks are outside this six-group rank policy.
+Additional elixirs and scrolls use the discovery policy below.
+
+## Bag discovery in 0.6.0
+
+Reviewed on 6 November 2026 before implementation. API source evidence is the
+retained Forever UI snapshot
+[`aff0d8cd53bf4d9ef1c1dd2786b94461a276fb16`](https://github.com/Gethe/wow-ui-source/tree/aff0d8cd53bf4d9ef1c1dd2786b94461a276fb16/Interface/AddOns),
+not a capture of the tester's installed build:
+
+- `Blizzard_APIDocumentationGenerated/ItemConstantsDocumentation.lua` defines
+  Consumable class 0, Elixir subclass 2 and Scroll subclass 4. The addon uses those
+  numeric categories, not English-name pattern matching or Classic item IDs.
+- `ItemDocumentation.lua` documents GetItemInfo's minimum level and class/subclass
+  results, and GetItemSpell's name. The use-spell ID is deliberately not treated as
+  the resulting aura ID.
+- `ContainerDocumentation.lua` documents C_Container.GetContainerNumSlots and
+  GetContainerItemID. Scan bag 0 through NUM_BAG_SLOTS only. The cached Forever UI
+  revision `172a387e3ab8`, `Blizzard_FrameXMLBase/Constants.lua`, assigns
+  NUM_BAG_SLOTS from Constants.InventoryConstants.NumBagSlots. No bank bags are scanned.
+- `Blizzard_FrameXML/SecureTemplates.lua` passes the secure item action's unit to
+  SecureCmdUseItem. The button now explicitly sets unit to `player` for scrolls.
+  This supports the intended self-target, but is not evidence of a successful click.
+
+Concrete client-derived examples:
+
+| Item | Forever evidence | Use-spell name evidence |
+|---|---|---|
+| 2454 Elixir of Minor Strength | [Icy Veins datamined record, build 1.60.1.70532](https://db.icy-veins.com/wow-forever/items/2454): Consumable/Elixir, +4 Strength | Lesser Strength (2367); not a verified resulting aura |
+| 954 Scroll of Strength | [ForeverDB client observations](https://foreverdb.net/item/954): Scroll, required level 10, +5 Strength to target | Strength; not a verified resulting aura |
+
+Observed locally: the user carried Elixir of Minor Strength and the old macro did
+nothing; the old allowlist excludes it. On 6 November 2026 the owner reported the
+local 0.6.0 test now works. Actual aura names, installed build and individual
+checklist outcomes were not supplied; see the limited result in VALIDATION.md.
+
+Discovery covers every carried item that the client classifies as an elixir or a
+scroll, once its name, required level and use-spell name are readable. It is not a
+claim that every database item exists, drops or works in the current client.
+Other categories (including flasks, potions, recipes and quest items) are excluded.
+Uncached item data is requested once and refreshed on receipt; failed loads need
+a reload. Missing APIs or incomplete data are reported when nothing can be queued.
+
+The original 24 items keep their groups and toggles and are never rediscovered as
+"other" items. Group 7 (Other elixirs) precedes group 8 (Scrolls); both are on by
+default, including for existing characters. Within each new group, use ascending
+item ID, independent of bag position. This is deterministic, not a strength ranking.
+No proxy based on item level, required level or name infers relative effect strength.
+
+**Assumption:** for discovered items only, an exact active aura name equal to the
+client's localized item name or use-spell name means the effect is present. Any
+such match blocks reuse, even when multiple ranks share a name. This avoids guessing
+an upgrade, but does not recognize different buff names, overlapping combined
+effects or stacking rules. Different names may still cause replacement. The
+original six groups retain their separately documented English-name assumptions.
+Use `/fem buffs` to inspect the assumed name and `/fem disable 7` or `8` if it does
+not match the client. Confirm scroll self-targeting and one use per manual click
+in-game before treating either as compatible.
 
 ## Source ledger
 

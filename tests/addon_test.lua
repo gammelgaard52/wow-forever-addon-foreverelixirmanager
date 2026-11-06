@@ -5,10 +5,20 @@ local function equal(actual, expected)
 end
 local function world(saved, legacy, options)
     local w = { combat = false, bags = {}, auras = {}, frames = {}, messages = {},
-        minimum = {}, requests = {}, writes = 0, scans = 0, level = 10, options = options or {} }
+        minimum = {}, requests = {}, items = {}, slots = {}, writes = 0, scans = 0,
+        level = 10, options = options or {} }
     local env = setmetatable({}, { __index = _G })
     w.env = env
     env.UIParent, env.SlashCmdList = {}, {}
+    env.NUM_BAG_SLOTS = 4
+    env.C_Container = {
+        GetContainerNumSlots = function(bag)
+            assert(not w.combat, "combat inventory inspection")
+            assert(bag >= 0 and bag <= 4, "bank inspection")
+            return #(w.slots[bag] or {})
+        end,
+        GetContainerItemID = function(bag, slot) return w.slots[bag][slot] end,
+    }
     env.ForeverElixirManagerCharDB, env.ForeverElixirManagerDB = saved, legacy
     env.print = function(message) w.messages[#w.messages + 1] = message end
     env.InCombatLockdown = function() return w.combat end
@@ -21,8 +31,14 @@ local function world(saved, legacy, options)
         end,
         GetItemInfo = function(id)
             if w.uncached == id then return nil end
+            local item = w.items[id]
+            if item then
+                return item.name, nil, nil, nil, w.minimum[id] or 1,
+                    nil, nil, nil, nil, nil, nil, item.class, item.subclass
+            end
             return "Localized item " .. id, nil, nil, nil, w.minimum[id] or 1
         end,
+        GetItemSpell = function(id) return w.items[id] and w.items[id].spell end,
         RequestLoadItemDataByID = function(id) w.requests[id] = (w.requests[id] or 0) + 1 end,
     }
     env.C_UnitAuras = { GetAuraDataByIndex = function(unit, index, filter)
@@ -73,6 +89,13 @@ local function world(saved, legacy, options)
     function w:command(text) self.env.SlashCmdList.FOREVERELIXIR(text) end
     function w:login() self:event("PLAYER_LOGIN") end
     function w:selected() return self.button and self.button.attributes.item end
+    function w:carry(id, name, subclass, spell, bag)
+        bag = bag or 0
+        self.items[id] = { name = name, class = 0, subclass = subclass, spell = spell }
+        self.bags[id] = 1
+        self.slots[bag] = self.slots[bag] or {}
+        table.insert(self.slots[bag], id)
+    end
     function w:setCombat(value)
         self.combat, self.secure = value, true
         if self.driver then self.driver(self.button, value and "combat" or "safe") end
@@ -293,6 +316,139 @@ test("group order is retained when later groups have stronger ranks", function()
     local w = world(); w.bags[2458], w.bags[250333] = 1, 1
     w:login(); equal(w:selected(), "item:2458")
     w:command("disable 1"); equal(w:selected(), "item:250333")
+end)
+
+test("reported Minor Strength is discovered and its use-name buff prevents reuse", function()
+    local w = world(); w:carry(2454, "Elixir of Minor Strength", 2, "Lesser Strength")
+    w:login(); equal(w:selected(), "item:2454")
+    w.auras = {{name="Lesser Strength"}}
+    w:event("UNIT_AURA", "player"); w:flush(); equal(w:selected(), nil)
+    w.auras = {}; w:event("UNIT_AURA", "player"); w:flush()
+    equal(w:selected(), "item:2454")
+end)
+
+test("all client-classified elixirs and scrolls including unknown IDs are discovered", function()
+    for _, subclass in ipairs({2, 4}) do
+        local w = world(); w:carry(900001, "Localized consumable", subclass, "Localized effect", 4)
+        w:login(); equal(w:selected(), "item:900001")
+        w.auras = {{name="Localized effect"}}; w:event("UNIT_AURA", "player"); w:flush()
+        equal(w:selected(), nil)
+    end
+end)
+
+test("scrolls explicitly target the player and all matching ranks stop on an active name", function()
+    local w = world(); w:carry(954, "Scroll of Strength", 4, "Strength")
+    w:carry(2289, "Scroll of Strength II", 4, "Strength")
+    w:login(); equal(w:selected(), "item:954"); equal(w.button.attributes.unit, "player")
+    w.auras = {{name="Strength"}}; w:event("UNIT_AURA", "player"); w:flush()
+    equal(w:selected(), nil)
+end)
+
+test("discovery excludes other categories even when their names say elixir or scroll", function()
+    for _, class in ipairs({0, 9, 12}) do
+        for _, subclass in ipairs({0, 1, 2, 3, 4, 5, 6, 7, 8}) do
+            if class ~= 0 or (subclass ~= 2 and subclass ~= 4) then
+                local w = world(); w:carry(900001, "Elixir scroll recipe", subclass, "Effect")
+                w.items[900001].class = class; w:login(); equal(w:selected(), nil)
+            end
+        end
+    end
+end)
+
+test("discovery uses equipped bags only and clears a banked or removed item", function()
+    local w = world(); w:carry(2454, "Minor Strength", 2, "Lesser Strength", 4)
+    w:login(); equal(w:selected(), "item:2454")
+    w.slots[4], w.slots[5] = {}, {2454}
+    w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), nil)
+    equal(w.button.attributes.type, nil)
+end)
+
+test("discovery respects level, deduplicates stacks and keeps order across bag moves", function()
+    local w = world(); w:carry(900002, "Second", 2, "Effect B")
+    w:carry(900001, "First", 2, "Effect A"); w.slots[1] = {900001}
+    w.minimum[900001] = 11; w:login(); equal(w:selected(), "item:900002")
+    w.level = 11; w:event("PLAYER_LEVEL_UP"); w:flush(); equal(w:selected(), "item:900001")
+    w.slots[0] = {900001, 900002}; w.slots[1] = {}
+    w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), "item:900001")
+    w:command("list")
+    local count = 0
+    for _, message in ipairs(w.messages) do
+        if message:find("First (item 900001", 1, true) then count = count + 1 end
+    end
+    equal(count, 1)
+end)
+
+test("known groups retain priority and disabled ranked items cannot reenter through discovery", function()
+    local w = world(); w:carry(2458, "Elixir of Minor Fortitude", 2, "Fortitude")
+    w:carry(2454, "Minor Strength", 2, "Lesser Strength")
+    w:carry(954, "Scroll of Strength", 4, "Strength")
+    w:login(); equal(w:selected(), "item:2458")
+    w:command("disable 1"); equal(w:selected(), "item:2454")
+    w:command("disable 7"); equal(w:selected(), "item:954")
+    w:command("disable 8"); equal(w:selected(), nil)
+    w:command("enable 7"); equal(w:selected(), "item:2454")
+    local reloaded = world(w.env.ForeverElixirManagerCharDB)
+    reloaded:carry(954, "Scroll of Strength", 4, "Strength")
+    reloaded:login(); equal(reloaded:selected(), nil)
+    reloaded:command("enable 8"); equal(reloaded:selected(), "item:954")
+end)
+
+test("existing per-character settings enable new categories without overwriting old choices", function()
+    local saved = {enabled = {[2458]=false}}
+    local w = world(saved); w:carry(2454, "Minor Strength", 2, "Lesser Strength")
+    w:login(); equal(w:selected(), "item:2454"); equal(saved.enabled[2458], false)
+end)
+
+test("uncached discovery retries on item-data receipt and failed loads do not loop", function()
+    for _, success in ipairs({true, false}) do
+        local w = world(); w:carry(2454, "Minor Strength", 2, "Lesser Strength")
+        w.uncached = 2454; w:login(); equal(w:selected(), nil); equal(w.requests[2454], 1)
+        w:command("status"); equal(w.requests[2454], 1)
+        w.uncached = nil; w:event("GET_ITEM_INFO_RECEIVED", 2454, success); w:flush()
+        equal(w:selected(), success and "item:2454" or nil)
+        w:event("BAG_UPDATE"); w:flush(); equal(w.requests[2454], 1)
+    end
+end)
+
+test("missing use spell is reported and never queues an unidentified effect", function()
+    local w = world(); w:carry(2454, "Minor Strength", 2)
+    w:login(); equal(w:selected(), nil)
+    assert(table.concat(w.messages, "\n"):find("discovery incomplete", 1, true))
+    w.items[2454].spell = "Lesser Strength"
+    w:event("GET_ITEM_INFO_RECEIVED", 2454, true); w:flush(); equal(w:selected(), "item:2454")
+    w:command("buffs")
+    assert(table.concat(w.messages, "\n"):find("assumed buff: Lesser Strength", 1, true))
+end)
+
+test("discovered items recognize item labels without equating use spell IDs and aura IDs", function()
+    local w = world(); w:carry(2454, "Minor Strength", 2, "Lesser Strength")
+    w.auras = {{name="Minor Strength"}}; w:login(); equal(w:selected(), nil)
+    w.auras = {{name="Unrelated effect", spellId=2367}}
+    w:event("UNIT_AURA", "player"); w:flush(); equal(w:selected(), "item:2454")
+end)
+
+test("missing discovery APIs report the limitation while preserving known group support", function()
+    local w = world(); w.env.C_Container = nil; w:login(); equal(w:selected(), nil)
+    assert(table.concat(w.messages, "\n"):find("Bag discovery API unavailable", 1, true))
+    w.bags[2458] = 1; w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), "item:2458")
+end)
+
+test("unreadable discovery clears selection and never selects a different item category", function()
+    for _, field in ipairs({"class", "subclass", "spell", "name"}) do
+        local w = world(); w:carry(2454, "Minor Strength", 2, "Lesser Strength"); w:login()
+        w.secret = {}; w.items[2454][field] = w.secret
+        w:event("BAG_UPDATE"); w:flush(); equal(w:selected(), nil)
+    end
+end)
+
+test("discovery, commands and bag changes make no decisions or protected writes in combat", function()
+    local w = world(); w:carry(2454, "Minor Strength", 2, "Lesser Strength"); w:login()
+    w:setCombat(true); local writes, scans = w.writes, w.scans
+    w.slots[0], w.bags[2454] = {}, 0
+    w:carry(954, "Scroll of Strength", 4, "Strength")
+    w:event("BAG_UPDATE"); w:command("list"); w:command("buffs"); w:command("disable 8"); w:flush()
+    equal(w.writes, writes); equal(w.scans, scans); equal(w.button.attributes.type, nil)
+    w:setCombat(false); equal(w:selected(), "item:954")
 end)
 
 for _, entry in ipairs(tests) do

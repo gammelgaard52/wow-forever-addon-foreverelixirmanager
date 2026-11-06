@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: ForeverElixirManager
-## Notes: Manually consume the first missing available elixir
-## Version: 0.5.2
+## Notes: Manually use missing elixirs and scrolls from your bags
+## Version: 0.6.0
 ## SavedVariables: ForeverElixirManagerDB
 ## SavedVariablesPerCharacter: ForeverElixirManagerCharDB
 ForeverElixirManager.lua
